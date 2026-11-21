@@ -1,0 +1,6 @@
+{
+  "name": "MARIKETI — Verified African Livestock Marketplace",
+  "description": "The smarter way to buy and sell verified livestock across Zimbabwe and Africa, connecting farmers, buyers, field agents, collection centres, and transport partners.",
+  "requestFramePermissions": ["geolocation", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

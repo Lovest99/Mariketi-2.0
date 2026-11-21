@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "Public Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-navy: #10243A;
+  --color-navy-deep: #091827;
+  --color-orange-brand: #F28C28;
+  --color-orange-hover: #DC7B1B;
+  --color-blue-secondary: #245B83;
+  --color-warm-white: #FAFAF7;
+  --color-canvas: #F4F6F7;
+  --color-surface: #FFFFFF;
+  --color-ink: #17212B;
+  --color-ink-muted: #697784;
+  --color-line: #E5E9ED;
+  --color-success: #21865B;
+  --color-warning: #D99A2B;
+  --color-danger: #D64B4B;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: #17212B;
+    background-color: #F4F6F7;
+    scroll-behavior: smooth;
+    overflow-x: clip;
+  }
+
+  body {
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.prose-justify {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
