@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MariketiProvider, useMariketi } from './context/MariketiContext';
-import type { LivestockCategory } from './types/mariketi';
+import type { AfricanRegion, LivestockCategory } from './types/mariketi';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { ToastStack } from './components/ui/DesignSystem';
 import { HomePage } from './pages/public/HomePage';
@@ -28,11 +28,18 @@ const MariketiRouter: React.FC = () => {
   const [marketSearch, setMarketSearch] = useState<{
     query: string;
     category?: LivestockCategory;
+    country?: string;
+    region?: AfricanRegion;
     key: number;
   }>({ query: '', key: 0 });
 
-  const handleHeroSearch = (query: string, category?: LivestockCategory) => {
-    setMarketSearch({ query, category, key: Date.now() });
+  const handleHeroSearch = (
+    query: string,
+    category?: LivestockCategory,
+    country?: string,
+    region?: AfricanRegion
+  ) => {
+    setMarketSearch({ query, category, country, region, key: Date.now() });
     navigatePublic('marketplace');
   };
 
@@ -71,6 +78,8 @@ const MariketiRouter: React.FC = () => {
             key={marketSearch.key}
             initialQuery={marketSearch.query}
             initialCategory={marketSearch.category}
+            initialCountry={marketSearch.country}
+            initialRegion={marketSearch.region}
           />
         );
         break;

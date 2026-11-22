@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { useMariketi } from '../../context/MariketiContext';
-import { cn, formatDateTime } from '../../lib/utils';
+import { cn, formatDateTime, getCountry, getCountryFlag } from '../../lib/utils';
 import type { FieldInspectionTask, GenderType, OfflineInspectionDraft } from '../../types/mariketi';
 import { WorkspaceShell, type NavItem } from '../../components/layout/WorkspaceShell';
 import {
@@ -80,6 +80,7 @@ export const FieldAgentWorkspace: React.FC = () => {
       setForm(saved);
     } else {
       const linkedListing = listings.find((l) => l.id === activeTask.listingId);
+      const taskCountry = getCountry(activeTask.country);
       setForm({
         taskId: activeTask.id,
         listingId: activeTask.listingId,
@@ -88,9 +89,9 @@ export const FieldAgentWorkspace: React.FC = () => {
         observedGender: linkedListing?.gender || 'Mixed Herd',
         observedWeightKg: linkedListing?.weightKg || 320,
         observedQuantity: activeTask.expectedQuantity,
-        earTagRange: 'ZW-TAG-2026-01',
+        earTagRange: `${taskCountry.code}-TAG-2026-01`,
         healthScore: 'Healthy & Cleared',
-        vetClearanceRef: 'DVS-CLR-2026-9450',
+        vetClearanceRef: `${taskCountry.code}-VET-2026-9450`,
         gpsCoordinates: '',
         notes: '',
         photos: [],
@@ -196,10 +197,10 @@ export const FieldAgentWorkspace: React.FC = () => {
             type="button"
             onClick={() => setOfflineMode(!offlineMode)}
             className={cn(
-              'h-9 px-2.5 sm:px-3 rounded-md border text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-colors',
+              'h-9 px-2.5 sm:px-3 rounded-lg border text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-all duration-150 focus-visible:outline-2 focus-visible:outline-[#F28C28]',
               offlineMode
-                ? 'bg-[#D99A2B]/15 border-[#D99A2B] text-[#8E5F0C]'
-                : 'bg-white border-[#E5E9ED] text-[#21865B]'
+                ? 'bg-[#D99A2B]/14 border-[#D99A2B] text-[#9A630A] hover:bg-[#D99A2B]/20'
+                : 'bg-white border-[#D4DDE6] text-[#1A7A50] hover:border-[#B6C3D1] hover:bg-[#F7F9FC] shadow-[0_1px_2px_rgba(16,36,58,0.04)]'
             )}
           >
             {offlineMode ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
@@ -222,11 +223,11 @@ export const FieldAgentWorkspace: React.FC = () => {
     >
       {/* Persistent Connectivity Notice */}
       {offlineMode && (
-        <div className="mb-4 p-3 rounded-lg bg-[#091827] text-white flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="mb-4 p-3.5 rounded-xl surface-navy-editorial border border-white/10 shadow-[0_6px_18px_rgba(9,24,39,0.2)] text-white flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-start sm:items-center gap-2.5 min-w-0 flex-1">
             <CloudOff className="w-4 h-4 text-[#F28C28] shrink-0 mt-0.5 sm:mt-0" />
-            <span className="leading-relaxed prose-justify">
-              <strong>Offline Field Mode Active:</strong> Forms, GPS coordinates, and photos are persisted safely in local IndexedDB until signal returns.
+            <span className="leading-relaxed text-slate-200 prose-justify">
+              <strong className="text-white">Offline Field Mode Active:</strong> Forms, GPS coordinates, and photos are persisted safely in local IndexedDB until signal returns.
             </span>
           </div>
           <Button variant="accent" size="sm" onClick={() => setOfflineMode(false)}>
@@ -239,10 +240,10 @@ export const FieldAgentWorkspace: React.FC = () => {
         {tab === 'home' && (
           <div className="space-y-5">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-[#10243A]">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#10243A] tracking-tight">
                 Field Operations · {currentUser?.name}
               </h1>
-              <p className="text-sm text-[#697784] mt-0.5">
+              <p className="text-sm text-[#526071] mt-0.5">
                 {currentUser?.meta?.assignedRegion || 'Matabeleland South & Midlands'} · Offline-first verification console.
               </p>
             </div>
@@ -258,7 +259,7 @@ export const FieldAgentWorkspace: React.FC = () => {
               />
             </div>
 
-            <div className="bg-white border border-[#E5E9ED] rounded-lg p-4 sm:p-5 space-y-3.5">
+            <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 sm:p-5 space-y-3.5">
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-sm font-bold text-[#10243A]">Priority Inspections Today</h2>
                 <Button variant="secondary" size="sm" onClick={() => setTab('tasks')}>
@@ -277,21 +278,21 @@ export const FieldAgentWorkspace: React.FC = () => {
                     .map((task) => (
                       <div
                         key={task.id}
-                        className="p-3.5 rounded-md bg-[#FAFAF7] border border-[#E5E9ED] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        className="p-3.5 rounded-lg bg-[#F7F9FC] border border-[#DFE6EE] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                       >
                         <div className="space-y-1 min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#697784]">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#526071]">
                             <span className="font-mono font-semibold text-[#10243A]">{task.reference}</span>
                             <span aria-hidden="true">·</span>
-                            <span className={task.priority === 'Urgent' ? 'text-[#D64B4B] font-semibold' : ''}>
+                            <span className={task.priority === 'Urgent' ? 'text-[#C53939] font-semibold' : ''}>
                               {task.priority} Priority
                             </span>
                             <span aria-hidden="true">·</span>
                             <span>Due {task.scheduledDate}</span>
                           </div>
                           <p className="text-sm font-bold text-[#10243A] leading-snug">{task.listingTitle}</p>
-                          <p className="text-xs text-[#697784]">
-                            {task.farmName} · {task.district}, {task.province} · Seller: {task.sellerName} ({task.sellerPhone})
+                          <p className="text-xs text-[#526071]">
+                            {getCountryFlag(task.country)} {task.farmName} · {task.district}, {task.province}, {task.country} · Seller: {task.sellerName} ({task.sellerPhone})
                           </p>
                         </div>
                         <Button
@@ -312,15 +313,15 @@ export const FieldAgentWorkspace: React.FC = () => {
 
         {tab === 'tasks' && (
           <div className="space-y-4">
-            <h1 className="text-xl font-bold text-[#10243A]">Assigned Verification Tasks</h1>
+            <h1 className="text-xl font-bold text-[#10243A] tracking-tight">Assigned Verification Tasks</h1>
             <div className="space-y-3">
               {fieldTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="bg-white border border-[#E5E9ED] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5"
+                  className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5"
                 >
                   <div className="space-y-1 min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#697784]">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#526071]">
                       <span className="font-mono font-bold text-[#10243A]">{task.reference}</span>
                       <span aria-hidden="true">·</span>
                       <span>{task.expectedCategory} ({task.expectedQuantity} head)</span>
@@ -328,11 +329,11 @@ export const FieldAgentWorkspace: React.FC = () => {
                       <span>{task.scheduledDate}</span>
                     </div>
                     <h2 className="text-[15px] font-bold text-[#10243A] leading-snug">{task.listingTitle}</h2>
-                    <p className="text-xs text-[#697784]">
-                      {task.farmName} · {task.district}, {task.province} · {task.sellerPhone}
+                    <p className="text-xs text-[#526071]">
+                      {getCountryFlag(task.country)} {task.farmName} · {task.district}, {task.province}, {task.country} · {task.sellerPhone}
                     </p>
                   </div>
-                  <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E5E9ED]">
+                  <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#DFE6EE]">
                     <StatusLabel
                       tone={
                         task.status === 'Completed'
@@ -361,19 +362,19 @@ export const FieldAgentWorkspace: React.FC = () => {
 
         {tab === 'verify' && activeTask && (
           <form onSubmit={handleSubmitInspection} className="max-w-2xl space-y-4">
-            <div className="bg-white border border-[#E5E9ED] rounded-lg p-4 sm:p-5 space-y-1.5">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#697784]">
+            <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 sm:p-5 space-y-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#526071]">
                 <span className="font-mono font-bold text-[#10243A]">{activeTask.reference}</span>
                 <span>Expected: {activeTask.expectedQuantity} {activeTask.expectedBreed}</span>
               </div>
               <h1 className="text-base sm:text-lg font-bold text-[#10243A] leading-snug">{activeTask.listingTitle}</h1>
-              <p className="text-xs text-[#697784]">
-                Seller: {activeTask.sellerName} ({activeTask.sellerPhone}) · {activeTask.farmName}, {activeTask.district}
+              <p className="text-xs text-[#526071]">
+                Seller: {activeTask.sellerName} ({activeTask.sellerPhone}) · {getCountryFlag(activeTask.country)} {activeTask.farmName}, {activeTask.district}, {activeTask.country}
               </p>
             </div>
 
             {/* GPS & Evidence Photos */}
-            <div className="bg-white border border-[#E5E9ED] rounded-lg p-4 sm:p-5 space-y-3.5">
+            <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 sm:p-5 space-y-3.5">
               <h2 className="text-sm font-bold text-[#10243A]">1. Location & Photographic Evidence</h2>
               <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-end">
                 <Input
@@ -388,13 +389,13 @@ export const FieldAgentWorkspace: React.FC = () => {
                   Capture GPS
                 </Button>
               </div>
-              {gpsStatus && <p className="text-xs text-[#21865B] font-medium">{gpsStatus}</p>}
+              {gpsStatus && <p className="text-xs text-[#1A7A50] font-medium">{gpsStatus}</p>}
 
               <div className="space-y-2">
-                <label className="block text-xs font-medium text-[#17212B]">
+                <label className="block text-xs font-semibold text-[#10243A]">
                   Capture Inspection Photos (Stored Offline in IndexedDB)
                 </label>
-                <label className="h-11 px-4 rounded-md border border-dashed border-[#10243A]/40 bg-[#FAFAF7] hover:bg-[#F4F6F7] inline-flex items-center gap-2 text-xs font-semibold text-[#10243A] cursor-pointer max-w-full">
+                <label className="h-11 px-4 rounded-lg border border-dashed border-[#10243A]/35 bg-[#F7F9FC] hover:bg-[#EEF3F8] hover:border-[#10243A]/60 inline-flex items-center gap-2 text-xs font-semibold text-[#10243A] cursor-pointer max-w-full transition-colors">
                   <Camera className="w-4 h-4 text-[#F28C28] shrink-0" />
                   <span className="truncate">Take Photo / Upload Evidence ({form.photos.length} attached)</span>
                   <input
@@ -409,7 +410,7 @@ export const FieldAgentWorkspace: React.FC = () => {
                 {form.photos.length > 0 && (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2">
                     {form.photos.map((src, i) => (
-                      <div key={i} className="relative aspect-[4/3] rounded overflow-hidden border border-[#E5E9ED] group">
+                      <div key={i} className="relative aspect-[4/3] rounded-lg overflow-hidden border border-[#DFE6EE] group">
                         <SafeImage src={src} alt={`Evidence ${i + 1}`} className="w-full h-full" />
                         <button
                           type="button"
@@ -420,7 +421,7 @@ export const FieldAgentWorkspace: React.FC = () => {
                             }))
                           }
                           aria-label={`Remove evidence photo ${i + 1}`}
-                          className="absolute top-1.5 right-1.5 h-7 w-7 rounded-full bg-[#091827]/80 hover:bg-[#D64B4B] text-white flex items-center justify-center transition-colors"
+                          className="absolute top-1.5 right-1.5 h-7 w-7 rounded-full bg-[#091827]/80 hover:bg-[#C53939] text-white flex items-center justify-center transition-colors backdrop-blur-xs"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -432,7 +433,7 @@ export const FieldAgentWorkspace: React.FC = () => {
             </div>
 
             {/* Physical Measurements */}
-            <div className="bg-white border border-[#E5E9ED] rounded-lg p-4 sm:p-5 space-y-3.5">
+            <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 sm:p-5 space-y-3.5">
               <h2 className="text-sm font-bold text-[#10243A]">2. Physical Livestock Verification</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <Input
@@ -483,7 +484,7 @@ export const FieldAgentWorkspace: React.FC = () => {
                   onChange={(e) => setForm({ ...form, earTagRange: e.target.value })}
                 />
                 <Input
-                  label="DVS Clearance Reference"
+                  label={`National Veterinary Clearance Ref (${getCountry(activeTask.country).vetAuthority})`}
                   value={form.vetClearanceRef}
                   onChange={(e) => setForm({ ...form, vetClearanceRef: e.target.value })}
                 />
@@ -540,8 +541,8 @@ export const FieldAgentWorkspace: React.FC = () => {
           <div className="space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h1 className="text-xl font-bold text-[#10243A]">IndexedDB Sync Queue & Reports</h1>
-                <p className="text-xs text-[#697784] mt-0.5">
+                <h1 className="text-xl font-bold text-[#10243A] tracking-tight">IndexedDB Sync Queue & Reports</h1>
+                <p className="text-xs text-[#526071] mt-0.5">
                   All offline drafts and submitted inspections persist safely across reloads.
                 </p>
               </div>
@@ -557,16 +558,16 @@ export const FieldAgentWorkspace: React.FC = () => {
             </div>
 
             {offlineDrafts.length === 0 ? (
-              <div className="bg-white border border-[#E5E9ED] rounded-lg p-6 text-center text-sm text-[#697784]">
+              <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-6 text-center text-sm text-[#526071]">
                 No offline drafts or queued reports in IndexedDB yet. Open a task and save or submit a report (try toggling Offline Mode first to test queue & retry).
               </div>
             ) : (
               <div className="space-y-3">
                 {offlineDrafts.map((d) => (
-                  <div key={d.taskId} className="bg-white border border-[#E5E9ED] rounded-lg p-4 space-y-3">
+                  <div key={d.taskId} className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 space-y-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-xs font-mono text-[#697784]">
+                        <p className="text-xs font-mono text-[#526071]">
                           Task {d.taskId} · Saved {formatDateTime(d.savedAt)}
                         </p>
                         <p className="text-sm font-bold text-[#10243A] mt-0.5">
@@ -585,12 +586,12 @@ export const FieldAgentWorkspace: React.FC = () => {
                       />
                     </div>
                     {d.syncStatus === 'conflict' && (
-                      <div className="p-3 rounded bg-[#FAFAF7] border border-[#D64B4B]/40 text-xs space-y-2.5">
-                        <p className="font-semibold text-[#D64B4B] inline-flex items-center gap-1.5">
+                      <div className="p-3.5 rounded-lg bg-[#FDF4F4] border border-[#C53939]/30 text-xs space-y-2.5">
+                        <p className="font-semibold text-[#C53939] inline-flex items-center gap-1.5">
                           <AlertTriangle className="w-4 h-4 shrink-0" />
                           Sync Conflict Detected (Retry #{d.retryCount})
                         </p>
-                        <p className="text-[#697784] leading-relaxed prose-justify">{d.conflictReason}</p>
+                        <p className="text-[#526071] leading-relaxed prose-justify">{d.conflictReason}</p>
                         <div className="flex flex-wrap gap-2">
                           <Button
                             variant="primary"
@@ -617,14 +618,15 @@ export const FieldAgentWorkspace: React.FC = () => {
         )}
 
         {tab === 'profile' && (
-          <div className="bg-white border border-[#E5E9ED] rounded-lg p-5 max-w-xl space-y-3.5">
+          <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-5 max-w-xl space-y-3.5">
             <h1 className="text-lg font-bold text-[#10243A]">Field Agent Credentials</h1>
-            <div className="space-y-2 text-sm">
-              <p><strong>Inspector:</strong> {currentUser?.name}</p>
-              <p><strong>Assigned Region:</strong> {currentUser?.meta?.assignedRegion || 'Matabeleland South & Midlands'}</p>
-              <p><strong>Qualifications:</strong> {currentUser?.meta?.qualification || 'BSc Animal Science, Accredited Inspector'}</p>
-              <p><strong>Contact:</strong> {currentUser?.phone}</p>
-              <p><strong>Storage Engine:</strong> Browser IndexedDB (`mariketi_field_ops_db`)</p>
+            <div className="space-y-2 text-sm text-[#0F1B2A]">
+              <p><strong className="text-[#10243A]">Inspector:</strong> {currentUser?.name}</p>
+              <p><strong className="text-[#10243A]">Country:</strong> {getCountryFlag(currentUser?.country)} {currentUser?.country || 'Zimbabwe'}</p>
+              <p><strong className="text-[#10243A]">Assigned Corridor:</strong> {currentUser?.meta?.assignedRegion || 'Southern & East Africa Operations'}</p>
+              <p><strong className="text-[#10243A]">Qualifications:</strong> {currentUser?.meta?.qualification || 'BSc Animal Science, Accredited Inspector'}</p>
+              <p><strong className="text-[#10243A]">Contact:</strong> {currentUser?.phone}</p>
+              <p><strong className="text-[#10243A]">Storage Engine:</strong> Browser IndexedDB (<code className="font-mono text-xs text-[#1E547A]">mariketi_field_ops_db</code>)</p>
             </div>
           </div>
         )}
@@ -633,7 +635,7 @@ export const FieldAgentWorkspace: React.FC = () => {
       {/* Mobile-First Bottom Tab Navigation Bar */}
       <nav
         aria-label="Mobile field navigation"
-        className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-[#E5E9ED] shadow-[0_-4px_14px_rgba(9,24,39,0.06)] grid grid-cols-5 min-h-[60px] pb-[env(safe-area-inset-bottom)]"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-[#DFE6EE] shadow-[0_-4px_16px_rgba(9,24,39,0.07)] grid grid-cols-5 min-h-[60px] pb-[env(safe-area-inset-bottom)]"
       >
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -647,8 +649,8 @@ export const FieldAgentWorkspace: React.FC = () => {
               className={cn(
                 'relative flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-semibold border-t-2 transition-colors',
                 active
-                  ? 'text-[#10243A] border-[#F28C28] bg-[#FAFAF7]'
-                  : 'text-[#697784] border-transparent'
+                  ? 'text-[#10243A] border-[#F28C28] bg-[#EEF3F8]/65'
+                  : 'text-[#526071] border-transparent hover:text-[#10243A]'
               )}
             >
               <Icon className={cn('w-4 h-4', active && 'text-[#C96A0F]')} />

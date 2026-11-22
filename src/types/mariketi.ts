@@ -1,3 +1,10 @@
+export type AfricanRegion =
+  | 'Southern Africa'
+  | 'East Africa'
+  | 'West Africa'
+  | 'Central Africa'
+  | 'North Africa';
+
 export type UserRole =
   | 'buyer'
   | 'seller'
@@ -31,6 +38,7 @@ export interface UserAccount {
   phone: string;
   role: UserRole;
   organization?: string;
+  country: string;
   province: string;
   district: string;
   verified: boolean;
@@ -74,6 +82,7 @@ export interface LivestockListing {
   quantity: number;
   priceUsd: number;
   priceUnit: 'per head' | 'total lot';
+  country: string;
   province: string;
   district: string;
   farmName: string;
@@ -190,6 +199,7 @@ export interface FieldInspectionTask {
   sellerName: string;
   sellerPhone: string;
   farmName: string;
+  country: string;
   province: string;
   district: string;
   assignedAgentId: string;
@@ -226,6 +236,7 @@ export interface CollectionCentreRecord {
   id: string;
   reference: string;
   centreName: string;
+  country?: string;
   transactionRef: string;
   listingTitle: string;
   category: LivestockCategory;
@@ -252,6 +263,7 @@ export interface TransportJob {
   quantity: number;
   pickupLocation: string;
   destination: string;
+  country?: string;
   distanceKm: number;
   requirements: string;
   scheduledDate: string;

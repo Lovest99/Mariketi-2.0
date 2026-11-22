@@ -12,7 +12,7 @@ import {
   ClipboardCheck,
 } from 'lucide-react';
 import { useMariketi } from '../../context/MariketiContext';
-import { cn, formatDate, formatDateTime, formatUSD } from '../../lib/utils';
+import { cn, formatDate, formatDateTime, formatUSD, getCountry } from '../../lib/utils';
 import { ListingCard } from '../../components/shared/ListingCard';
 import {
   Button,
@@ -43,6 +43,7 @@ export const ListingDetailPage: React.FC = () => {
 
   const listing =
     listings.find((l) => l.id === selectedListingId) || listings[0];
+  const countryMeta = getCountry(listing.country);
 
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
   const [offerModalOpen, setOfferModalOpen] = useState(false);
@@ -69,7 +70,7 @@ export const ListingDetailPage: React.FC = () => {
       (l) =>
         l.id !== listing.id &&
         l.status === 'active' &&
-        (l.category === listing.category || l.province === listing.province)
+        (l.category === listing.category || l.country === listing.country)
     )
     .slice(0, 3);
 
@@ -100,7 +101,7 @@ export const ListingDetailPage: React.FC = () => {
   };
 
   const handleShare = () => {
-    const shareText = `${listing.title} (${listing.reference}) — ${formatUSD(listing.priceUsd)} ${listing.priceUnit} on MARIKETI`;
+    const shareText = `${listing.title} (${listing.reference}) · ${countryMeta.flag} ${listing.country} — ${formatUSD(listing.priceUsd)} ${listing.priceUnit} on MARIKETI`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(shareText).catch(() => {});
     }
@@ -114,12 +115,12 @@ export const ListingDetailPage: React.FC = () => {
         <button
           type="button"
           onClick={() => navigatePublic('marketplace')}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-[#697784] hover:text-[#10243A]"
+          className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[#526071] hover:text-[#10243A] transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28] rounded"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4 transition-transform duration-150 group-hover:-translate-x-0.5" />
           Back to Marketplace
         </button>
-        <div className="text-xs font-mono text-[#697784]">
+        <div className="text-xs font-mono text-[#526071]">
           {listing.reference} · Listed {formatDate(listing.listedAt)} · {listing.views} views
         </div>
       </div>
@@ -128,7 +129,7 @@ export const ListingDetailPage: React.FC = () => {
         {/* Left: Gallery, Specs, Verification Report, Seller Profile */}
         <div className="lg:col-span-8 space-y-5 min-w-0">
           {/* Image Gallery */}
-          <div className="bg-white border border-[#E5E9ED] rounded-lg overflow-hidden">
+          <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] overflow-hidden">
             <div className="aspect-[16/10] bg-[#10243A]">
               <SafeImage
                 src={listing.images[activePhotoIdx] || listing.images[0]}
@@ -137,16 +138,16 @@ export const ListingDetailPage: React.FC = () => {
               />
             </div>
             {listing.images.length > 1 && (
-              <div className="p-3 bg-[#FAFAF7] border-t border-[#E5E9ED] flex items-center gap-2.5 overflow-x-auto">
+              <div className="p-3 bg-[#F7F9FC] border-t border-[#DFE6EE] flex items-center gap-2.5 overflow-x-auto">
                 {listing.images.map((img, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setActivePhotoIdx(idx)}
                     className={cn(
-                      'w-20 aspect-[4/3] rounded overflow-hidden border-2 shrink-0 transition-colors',
+                      'w-20 aspect-[4/3] rounded-lg overflow-hidden border-2 shrink-0 transition-all duration-150',
                       activePhotoIdx === idx
-                        ? 'border-[#F28C28]'
+                        ? 'border-[#F28C28] ring-2 ring-[#F28C28]/25'
                         : 'border-transparent opacity-75 hover:opacity-100'
                     )}
                   >
@@ -158,14 +159,16 @@ export const ListingDetailPage: React.FC = () => {
           </div>
 
           {/* Title & Description */}
-          <div className="bg-white border border-[#E5E9ED] rounded-lg p-4 sm:p-5 space-y-3.5">
+          <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 sm:p-5 space-y-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs text-[#697784]">
+              <div className="text-xs font-medium text-[#526071]">
                 <span>{listing.category}</span>
                 <span className="mx-1.5" aria-hidden="true">·</span>
                 <span>{listing.breed}</span>
                 <span className="mx-1.5" aria-hidden="true">·</span>
-                <span>{listing.district}, {listing.province}</span>
+                <span>
+                  {countryMeta.flag} {listing.district}, {listing.province}, {listing.country}
+                </span>
               </div>
               <StatusLabel
                 tone={listing.verificationStatus === 'Verified' ? 'success' : 'warning'}
@@ -175,20 +178,20 @@ export const ListingDetailPage: React.FC = () => {
             <h1 className="text-xl sm:text-2xl font-bold text-[#10243A]">
               {listing.title}
             </h1>
-            <p className="text-sm text-[#17212B] leading-relaxed prose-justify">{listing.description}</p>
+            <p className="text-sm text-[#0F1B2A] leading-relaxed prose-justify">{listing.description}</p>
 
             {/* Specifications Grid */}
-            <div className="pt-3.5 border-t border-[#E5E9ED] grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 tabular-nums">
+            <div className="pt-3.5 border-t border-[#DFE6EE] grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 tabular-nums">
               {[
                 ['Breed', listing.breed],
                 ['Age', listing.ageLabel],
                 ['Gender / Group', listing.gender],
                 ['Avg Live Weight', `${listing.weightKg} kg`],
                 ['Available Quantity', `${listing.quantity} head`],
-                ['Farm Location', `${listing.district}, ${listing.province}`],
+                ['Farm Location', `${countryMeta.flag} ${listing.district}, ${listing.country}`],
               ].map(([k, v]) => (
-                <div key={k} className="p-2.5 sm:p-3 rounded-md bg-[#FAFAF7] border border-[#E5E9ED] min-w-0">
-                  <p className="text-[11px] text-[#697784] truncate">{k}</p>
+                <div key={k} className="p-2.5 sm:p-3 rounded-lg bg-[#F7F9FC] border border-[#DFE6EE] min-w-0">
+                  <p className="text-[11px] font-medium text-[#526071] truncate">{k}</p>
                   <p className="text-[13px] font-semibold text-[#10243A] mt-0.5 truncate">{v}</p>
                 </div>
               ))}
@@ -197,24 +200,24 @@ export const ListingDetailPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 text-xs">
               <div>
                 <p className="font-semibold text-[#10243A]">Vaccination & Health Protocol</p>
-                <p className="text-[#697784] mt-1 leading-relaxed prose-justify">{listing.vaccinationSummary}</p>
+                <p className="text-[#526071] mt-1 leading-relaxed prose-justify">{listing.vaccinationSummary}</p>
               </div>
               <div>
                 <p className="font-semibold text-[#10243A]">Pasture & Feeding Regime</p>
-                <p className="text-[#697784] mt-1 leading-relaxed prose-justify">{listing.feedingRegime}</p>
+                <p className="text-[#526071] mt-1 leading-relaxed prose-justify">{listing.feedingRegime}</p>
               </div>
             </div>
           </div>
 
           {/* Field Verification Report */}
-          <div className="bg-white border border-[#E5E9ED] rounded-lg p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#E5E9ED]">
+          <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#DFE6EE]">
               <div>
                 <h2 className="text-lg font-bold text-[#10243A]">
                   On-Site Field Verification Report
                 </h2>
-                <p className="text-xs text-[#697784] mt-0.5">
-                  Independent physical inspection conducted by MARIKETI Field Operations.
+                <p className="text-xs text-[#526071] mt-0.5">
+                  Independent physical inspection conducted by MARIKETI Field Operations ({countryMeta.region}).
                 </p>
               </div>
               <StatusLabel
@@ -227,38 +230,38 @@ export const ListingDetailPage: React.FC = () => {
               <div className="pt-5 space-y-5">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs tabular-nums">
                   <div>
-                    <p className="text-[#697784]">Inspector</p>
+                    <p className="text-[#526071]">Inspector</p>
                     <p className="font-semibold text-[#10243A] mt-0.5">
                       {listing.verificationReport.agentName}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[#697784]">Inspection Date</p>
+                    <p className="text-[#526071]">Inspection Date</p>
                     <p className="font-mono text-[#10243A] mt-0.5">
                       {formatDate(listing.verificationReport.inspectedAt)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[#697784]">Ear Tag Range</p>
+                    <p className="text-[#526071]">Ear Tag Range</p>
                     <p className="font-mono text-[#10243A] mt-0.5">
                       {listing.verificationReport.earTagRange}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[#697784]">DVS Clearance Ref</p>
-                    <p className="font-mono text-[#21865B] font-semibold mt-0.5">
+                    <p className="text-[#526071]">Vet Clearance ({countryMeta.vetAuthority})</p>
+                    <p className="font-mono text-[#1A7A50] font-semibold mt-0.5">
                       {listing.verificationReport.vetClearanceRef}
                     </p>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-md bg-[#FAFAF7] border border-[#E5E9ED] text-xs space-y-1.5">
+                <div className="p-3.5 rounded-lg bg-[#F7F9FC] border border-[#DFE6EE] text-xs space-y-1.5">
                   <p className="font-semibold text-[#10243A] inline-flex flex-wrap items-center gap-1.5">
-                    <FileCheck2 className="w-4 h-4 text-[#21865B] shrink-0" />
+                    <FileCheck2 className="w-4 h-4 text-[#1A7A50] shrink-0" />
                     <span>Health Score: {listing.verificationReport.healthScore} · GPS:</span>{' '}
                     <span className="font-mono">{listing.verificationReport.gpsCoordinates}</span>
                   </p>
-                  <p className="text-[#697784] leading-relaxed prose-justify">
+                  <p className="text-[#526071] leading-relaxed prose-justify">
                     {listing.verificationReport.notes}
                   </p>
                 </div>
@@ -270,7 +273,7 @@ export const ListingDetailPage: React.FC = () => {
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {listing.verificationReport.photos.map((photo, idx) => (
-                        <div key={idx} className="aspect-[4/3] rounded overflow-hidden border border-[#E5E9ED]">
+                        <div key={idx} className="aspect-[4/3] rounded-lg overflow-hidden border border-[#DFE6EE]">
                           <SafeImage
                             src={photo}
                             alt={`Field inspection evidence ${idx + 1}`}
@@ -284,7 +287,7 @@ export const ListingDetailPage: React.FC = () => {
               </div>
             ) : (
               <div className="pt-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <p className="text-sm text-[#697784]">
+                <p className="text-sm text-[#526071] leading-relaxed">
                   This lot has not yet completed physical field inspection. You can dispatch an accredited MARIKETI Field Agent to verify headcount, weights, and veterinary papers before committing.
                 </p>
                 <Button
@@ -300,15 +303,15 @@ export const ListingDetailPage: React.FC = () => {
           </div>
 
           {/* Seller Profile & Verified Reviews */}
-          <div className="bg-white border border-[#E5E9ED] rounded-lg p-4 sm:p-5 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-[#E5E9ED]">
+          <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 sm:p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-[#DFE6EE]">
               <div>
-                <p className="text-xs text-[#697784]">Verified Farm / Seller</p>
+                <p className="text-xs font-medium text-[#526071]">Verified Farm / Seller</p>
                 <h2 className="text-base sm:text-lg font-bold text-[#10243A] mt-0.5">
                   {listing.farmName}
                 </h2>
-                <p className="text-xs text-[#697784] mt-0.5">
-                  Managed by {listing.sellerName} · {listing.district}, {listing.province}
+                <p className="text-xs text-[#526071] mt-0.5">
+                  Managed by {listing.sellerName} · {countryMeta.flag} {listing.district}, {listing.province}, {listing.country}
                 </p>
               </div>
               <div className="sm:text-right">
@@ -316,7 +319,7 @@ export const ListingDetailPage: React.FC = () => {
                   <Star className="w-4 h-4 fill-[#F28C28] text-[#F28C28]" />
                   {listing.sellerRating.toFixed(1)}
                 </p>
-                <p className="text-xs text-[#697784]">
+                <p className="text-xs text-[#526071]">
                   {sellerReviews.length} verified trade reviews
                 </p>
               </div>
@@ -327,61 +330,61 @@ export const ListingDetailPage: React.FC = () => {
                 {sellerReviews.map((rev) => (
                   <div
                     key={rev.id}
-                    className="p-3.5 rounded-md bg-[#FAFAF7] border border-[#E5E9ED] space-y-1.5"
+                    className="p-3.5 rounded-lg bg-[#F7F9FC] border border-[#DFE6EE] space-y-1.5"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                       <span className="font-semibold text-[#10243A]">
-                        {rev.buyerName} · <span className="font-mono text-[#697784]">{rev.transactionRef}</span>
+                        {rev.buyerName} · <span className="font-mono text-[#526071]">{rev.transactionRef}</span>
                       </span>
                       <span className="font-mono font-semibold text-[#10243A]">
                         {rev.rating.toFixed(1)} / 5.0
                       </span>
                     </div>
-                    <p className="text-xs text-[#697784] leading-relaxed prose-justify">{rev.comment}</p>
-                    <p className="text-[11px] text-[#697784]">{formatDateTime(rev.createdAt)}</p>
+                    <p className="text-xs text-[#526071] leading-relaxed prose-justify">{rev.comment}</p>
+                    <p className="text-[11px] text-[#526071]">{formatDateTime(rev.createdAt)}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[#697784]">No completed buyer reviews logged yet.</p>
+              <p className="text-sm text-[#526071]">No completed buyer reviews logged yet.</p>
             )}
           </div>
         </div>
 
         {/* Right: Sticky Purchase / Offer Module */}
         <aside className="lg:col-span-4 lg:sticky lg:top-20 space-y-4">
-          <div className="bg-white border border-[#E5E9ED] rounded-lg p-5 space-y-4">
-            <div className="pb-3.5 border-b border-[#E5E9ED]">
-              <p className="text-xs text-[#697784]">Asking Price</p>
+          <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_4px_18px_rgba(16,36,58,0.06)] p-5 space-y-4">
+            <div className="pb-3.5 border-b border-[#DFE6EE]">
+              <p className="text-xs font-medium text-[#526071]">Asking Price</p>
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="text-2xl sm:text-3xl font-extrabold font-mono tabular-nums text-[#10243A]">
                   {formatUSD(listing.priceUsd)}
                 </span>
-                <span className="text-xs text-[#697784]">{listing.priceUnit}</span>
+                <span className="text-xs text-[#526071]">{listing.priceUnit}</span>
               </div>
-              <p className="text-xs text-[#697784] mt-1.5 tabular-nums">
+              <p className="text-xs text-[#526071] mt-1.5 tabular-nums">
                 Full lot ({listing.quantity} head):{' '}
                 <strong className="font-mono text-[#10243A]">{formatUSD(totalAsking)}</strong>
               </p>
             </div>
 
-            <div className="space-y-2 text-xs text-[#697784]">
+            <div className="space-y-2 text-xs text-[#526071]">
               <div className="flex items-center justify-between">
                 <span>Availability</span>
-                <span className="font-semibold text-[#21865B]">
+                <span className="font-semibold text-[#1A7A50]">
                   Available ({listing.quantity} head)
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span>Origin District</span>
-                <span className="font-medium text-[#10243A] inline-flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {listing.district}, {listing.province}
+              <div className="flex items-center justify-between gap-2">
+                <span>Origin</span>
+                <span className="font-medium text-[#10243A] inline-flex items-center gap-1 text-right">
+                  <MapPin className="w-3.5 h-3.5 text-[#526071] shrink-0" />
+                  {countryMeta.flag} {listing.district}, {listing.country}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Inspection Status</span>
-                <span className="font-medium text-[#10243A]">{listing.verificationStatus}</span>
+                <span className="font-semibold text-[#10243A]">{listing.verificationStatus}</span>
               </div>
             </div>
 
@@ -414,7 +417,7 @@ export const ListingDetailPage: React.FC = () => {
               </Button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[#E5E9ED]">
+            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[#DFE6EE]">
               <Button
                 variant="secondary"
                 size="sm"
@@ -434,12 +437,12 @@ export const ListingDetailPage: React.FC = () => {
               </Button>
             </div>
 
-            <div className="p-3 rounded bg-[#FAFAF7] border border-[#E5E9ED] text-[11px] text-[#697784] leading-relaxed">
+            <div className="p-3 rounded-lg bg-[#F7F9FC] border border-[#DFE6EE] text-[11px] text-[#526071] leading-relaxed">
               Offers create an immutable negotiation trail. You can track all active offers and handovers inside the{' '}
               <button
                 type="button"
                 onClick={() => loginAsRole('buyer')}
-                className="font-semibold text-[#10243A] underline"
+                className="font-semibold text-[#10243A] hover:text-[#1E547A] underline underline-offset-2 transition-colors"
               >
                 Buyer Workspace
               </button>
@@ -451,7 +454,7 @@ export const ListingDetailPage: React.FC = () => {
 
       {/* Similar Livestock */}
       {similarListings.length > 0 && (
-        <section className="mt-10 pt-8 border-t border-[#E5E9ED]">
+        <section className="mt-10 pt-8 border-t border-[#DFE6EE]">
           <h2 className="text-lg sm:text-xl font-bold text-[#10243A] mb-4">Similar Livestock Lots</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {similarListings.map((sim) => (
@@ -473,12 +476,12 @@ export const ListingDetailPage: React.FC = () => {
       )}
 
       {/* Compact Mobile Sticky Primary CTA Bar (<= 64px, under 15% mobile viewport cap) */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-[#E5E9ED] shadow-[0_-4px_12px_rgba(9,24,39,0.06)] px-4 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] flex items-center justify-between gap-3">
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-[#DFE6EE] shadow-[0_-6px_20px_rgba(9,24,39,0.08)] px-4 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-base font-extrabold font-mono tabular-nums text-[#10243A] leading-none">
             {formatUSD(listing.priceUsd)}
           </p>
-          <p className="text-[11px] text-[#697784] mt-0.5 truncate">
+          <p className="text-[11px] text-[#526071] mt-0.5 truncate">
             {listing.priceUnit} · {listing.quantity} head
           </p>
         </div>
@@ -514,8 +517,8 @@ export const ListingDetailPage: React.FC = () => {
               onChange={(e) => setOfferQty(e.target.value)}
             />
           </div>
-          <div className="p-3.5 rounded-md bg-[#FAFAF7] border border-[#E5E9ED] flex items-center justify-between text-sm">
-            <span className="text-[#697784]">Total Offer Value</span>
+          <div className="p-3.5 rounded-lg bg-[#F7F9FC] border border-[#DFE6EE] flex items-center justify-between text-sm">
+            <span className="text-[#526071]">Total Offer Value</span>
             <span className="font-mono font-bold text-[#10243A] tabular-nums">
               {formatUSD(proposedTotal)}
             </span>
@@ -523,14 +526,14 @@ export const ListingDetailPage: React.FC = () => {
           <Textarea
             label="Commercial Terms & Collection Preference"
             rows={3}
-            placeholder="Specify preferred handover hub (e.g., Gweru Collection Hub), payment timing, or veterinary clearance requirements..."
+            placeholder="Specify preferred handover hub (e.g., Gweru Hub, Nanyuki Hub, or Namanga Corridor), payment timing, or veterinary clearance requirements..."
             value={offerNote}
             onChange={(e) => setOfferNote(e.target.value)}
             required
           />
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
             {!currentUser && (
-              <p className="text-[11px] text-[#697784]">
+              <p className="text-[11px] text-[#526071]">
                 Will submit under Buyer preview profile (Tendai Moyo).
               </p>
             )}

@@ -14,7 +14,7 @@ import {
   SEED_USERS,
   SEED_VEHICLES,
 } from '../data/seedData';
-import { generateRef } from '../lib/utils';
+import { generateRef, getCountry } from '../lib/utils';
 import {
   deleteOfflineDraft,
   getAllOfflineDrafts,
@@ -112,7 +112,7 @@ interface MariketiContextValue extends MariketiState {
   updateListingStatus: (listingId: string, status: LivestockListing['status']) => void;
   approveListingVerification: (listingId: string, status: LivestockListing['verificationStatus']) => void;
   requestInspectionForListing: (listingId: string) => void;
-  updateCurrentUserProfile: (updates: Partial<Pick<UserAccount, 'name' | 'organization' | 'phone' | 'district' | 'province' | 'meta'>>) => void;
+  updateCurrentUserProfile: (updates: Partial<Pick<UserAccount, 'name' | 'organization' | 'phone' | 'country' | 'district' | 'province' | 'meta'>>) => void;
 
   // Offers & Negotiations (immutable history)
   submitOffer: (listingId: string, amountUsd: number, quantity: number, note: string) => Offer | null;
@@ -169,13 +169,28 @@ interface MariketiContextValue extends MariketiState {
   resetDemoData: () => void;
 }
 
-const STORAGE_KEY = 'mariketi_v2_state';
+const STORAGE_KEY = 'mariketi_v3_panafrica_state';
 
 function loadInitialState(): MariketiState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      return JSON.parse(raw) as MariketiState;
+      const parsed = JSON.parse(raw) as MariketiState;
+      return {
+        ...parsed,
+        users: (parsed.users || SEED_USERS).map((u) => ({
+          ...u,
+          country: u.country || 'Zimbabwe',
+        })),
+        listings: (parsed.listings || SEED_LISTINGS).map((l) => ({
+          ...l,
+          country: l.country || 'Zimbabwe',
+        })),
+        fieldTasks: (parsed.fieldTasks || SEED_FIELD_TASKS).map((t) => ({
+          ...t,
+          country: t.country || 'Zimbabwe',
+        })),
+      };
     }
   } catch {
     // ignore corrupted storage
@@ -194,8 +209,8 @@ function loadInitialState(): MariketiState {
     reviews: SEED_REVIEWS,
     disputes: SEED_DISPUTES,
     auditLogs: SEED_AUDIT_LOGS,
-    savedListingIds: ['lst-1', 'lst-3'],
-    recentlyViewedIds: ['lst-1', 'lst-2'],
+    savedListingIds: ['lst-1', 'lst-10'],
+    recentlyViewedIds: ['lst-1', 'lst-10'],
     compareListingIds: [],
   };
 }
@@ -474,7 +489,9 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         listings: [newListing, ...prev.listings],
       }));
       if (newListing.verificationStatus === 'Pending Verification') {
-        const defaultAgent = state.users.find((u) => u.role === 'agent')!;
+        const defaultAgent =
+          state.users.find((u) => u.role === 'agent' && u.country === newListing.country) ||
+          state.users.find((u) => u.role === 'agent')!;
         const task: FieldInspectionTask = {
           id: `tsk-${Date.now()}`,
           reference: generateRef('INS'),
@@ -483,6 +500,7 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           sellerName: seller.name,
           sellerPhone: seller.phone,
           farmName: newListing.farmName,
+          country: newListing.country,
           province: newListing.province,
           district: newListing.district,
           assignedAgentId: defaultAgent.id,
@@ -498,10 +516,11 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ...prev,
           fieldTasks: [task, ...prev.fieldTasks],
         }));
+        const countryInfo = getCountry(newListing.country);
         addNotification(
           'agent',
           `New verification requested: ${newListing.reference}`,
-          `${newListing.title} in ${newListing.district}, ${newListing.province}.`,
+          `${newListing.title} in ${countryInfo.flag} ${newListing.district}, ${newListing.province}, ${newListing.country}.`,
           'verification'
         );
       }
@@ -543,15 +562,20 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     (listingId: string) => {
       const listing = state.listings.find((l) => l.id === listingId);
       if (!listing) return;
-      const defaultAgent = state.users.find((u) => u.role === 'agent')!;
+      const sellerAcc = state.users.find((u) => u.id === listing.sellerId);
+      const defaultAgent =
+        state.users.find((u) => u.role === 'agent' && u.country === listing.country) ||
+        state.users.find((u) => u.role === 'agent')!;
+      const countryInfo = getCountry(listing.country);
       const task: FieldInspectionTask = {
         id: `tsk-${Date.now()}`,
         reference: generateRef('INS'),
         listingId: listing.id,
         listingTitle: listing.title,
         sellerName: listing.sellerName,
-        sellerPhone: '+263 71 290 4412',
+        sellerPhone: sellerAcc?.phone || `${countryInfo.dialCode} 71 290 4412`,
         farmName: listing.farmName,
+        country: listing.country,
         province: listing.province,
         district: listing.district,
         assignedAgentId: defaultAgent.id,
@@ -575,7 +599,7 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       addNotification(
         'agent',
         `Buyer-requested inspection: ${listing.reference}`,
-        `Assigned to ${defaultAgent.name} for ${listing.district}, ${listing.province}.`,
+        `Assigned to ${defaultAgent.name} for ${countryInfo.flag} ${listing.district}, ${listing.province}, ${listing.country}.`,
         'verification'
       );
       pushToast('Field inspection requested', 'success', `Task ${task.reference} dispatched to MARIKETI Field Unit.`);
@@ -768,6 +792,7 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const listing = state.listings.find((l) => l.id === offer.listingId);
       const now = new Date().toISOString();
       const handoverCode = `HND-${Math.floor(1000 + Math.random() * 9000)}`;
+      const listingCountry = getCountry(listing?.country);
       const txn: Transaction = {
         id: `txn-${Date.now()}`,
         reference: generateRef('TXN'),
@@ -784,9 +809,11 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         state: 'Awaiting payment',
         paymentMode: 'Simulated Demo Settlement (No Live Funds Held)',
         paymentStatus: 'Unpaid',
-        collectionCentreName: 'Gweru Central Livestock Collection Hub',
-        pickupLocation: listing ? `${listing.farmName}, ${listing.district}` : 'Registered Ranch',
-        deliveryLocation: deliveryLocation || 'Highveld Abattoir Depot, Harare',
+        collectionCentreName: `${listing?.district || 'Regional'} Livestock Collection Hub (${listingCountry.flag} ${listingCountry.name})`,
+        pickupLocation: listing
+          ? `${listingCountry.flag} ${listing.farmName}, ${listing.district}, ${listingCountry.name}`
+          : 'Registered Ranch',
+        deliveryLocation: deliveryLocation || 'Buyer Designated Receiving Depot',
         handoverCode,
         documents: [
           {
@@ -795,8 +822,8 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             verified: true,
           },
           {
-            name: 'Veterinary Movement Clearance (Pending)',
-            ref: 'DVS-PENDING',
+            name: `Veterinary Movement Clearance (${listingCountry.vetAuthority} — Pending)`,
+            ref: `VET-${listingCountry.code}-PENDING`,
             verified: false,
           },
         ],
@@ -831,6 +858,7 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         id: `ccr-${Date.now()}`,
         reference: generateRef('MCC'),
         centreName: txn.collectionCentreName,
+        country: listingCountry.name,
         transactionRef: txn.reference,
         listingTitle: txn.listingTitle,
         category: txn.listingCategory,
@@ -853,6 +881,7 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         listingTitle: txn.listingTitle,
         category: txn.listingCategory,
         quantity: txn.quantity,
+        country: listingCountry.name,
         pickupLocation: txn.pickupLocation,
         destination: txn.deliveryLocation,
         distanceKm: 215,
@@ -1048,9 +1077,9 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         observedGender: draft.observedGender,
         observedWeightKg: draft.observedWeightKg,
         observedQuantity: draft.observedQuantity,
-        earTagRange: draft.earTagRange || 'ZW-VERIFIED-TAG',
+        earTagRange: draft.earTagRange || 'AF-VERIFIED-TAG',
         healthScore: draft.healthScore,
-        vetClearanceRef: draft.vetClearanceRef || generateRef('DVS'),
+        vetClearanceRef: draft.vetClearanceRef || generateRef('VET'),
         notes: draft.notes,
         photos: draft.photos,
         outcome: draft.healthScore === 'Requires Veterinary Review' ? 'Flagged' : 'Approved',
@@ -1330,14 +1359,17 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const listing = state.listings.find((l) => l.id === listingId);
       const agent = state.users.find((u) => u.id === agentId);
       if (!listing || !agent) return;
+      const sellerAcc = state.users.find((u) => u.id === listing.sellerId);
+      const countryInfo = getCountry(listing.country);
       const task: FieldInspectionTask = {
         id: `tsk-${Date.now()}`,
         reference: generateRef('INS'),
         listingId: listing.id,
         listingTitle: listing.title,
         sellerName: listing.sellerName,
-        sellerPhone: '+263 71 290 4412',
+        sellerPhone: sellerAcc?.phone || `${countryInfo.dialCode} 71 290 4412`,
         farmName: listing.farmName,
+        country: listing.country,
         province: listing.province,
         district: listing.district,
         assignedAgentId: agent.id,
@@ -1469,7 +1501,7 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const updateCurrentUserProfile = useCallback(
     (
       updates: Partial<
-        Pick<UserAccount, 'name' | 'organization' | 'phone' | 'district' | 'province' | 'meta'>
+        Pick<UserAccount, 'name' | 'organization' | 'phone' | 'country' | 'district' | 'province' | 'meta'>
       >
     ) => {
       if (!currentUser) return;
@@ -1537,8 +1569,8 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       reviews: SEED_REVIEWS,
       disputes: SEED_DISPUTES,
       auditLogs: SEED_AUDIT_LOGS,
-      savedListingIds: ['lst-1', 'lst-3'],
-      recentlyViewedIds: ['lst-1', 'lst-2'],
+      savedListingIds: ['lst-1', 'lst-10'],
+      recentlyViewedIds: ['lst-1', 'lst-10'],
       compareListingIds: [],
     });
     pushToast('Demo dataset restored', 'info');

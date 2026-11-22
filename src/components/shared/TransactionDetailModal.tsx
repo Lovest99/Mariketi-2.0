@@ -81,7 +81,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             <span className="font-semibold text-[#10243A]">
               Trade Lifecycle Progress
             </span>
-            <span className="font-mono text-[#697784] tabular-nums">
+            <span className="font-mono text-[#526071] tabular-nums">
               {currentIdx >= 0
                 ? `Stage ${currentIdx + 1} of ${LIFECYCLE_ORDER.length} · ${transaction.state}`
                 : transaction.state}
@@ -94,10 +94,10 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                 title={stage}
                 className={`h-1.5 rounded-full transition-colors ${
                   transaction.state === 'Disputed' || transaction.state === 'Cancelled'
-                    ? 'bg-[#D64B4B]/50'
+                    ? 'bg-[#C53939]/55'
                     : idx <= currentIdx
-                    ? 'bg-[#21865B]'
-                    : 'bg-[#E5E9ED]'
+                    ? 'bg-[#1A7A50]'
+                    : 'bg-[#DFE6EE]'
                 }`}
               />
             ))}
@@ -105,32 +105,32 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         </div>
 
         {/* Transparent Demo Payment Banner */}
-        <div className="p-3 rounded-md bg-[#FAFAF7] border border-[#E5E9ED] flex items-start gap-2.5">
-          <Info className="w-4 h-4 text-[#245B83] mt-0.5 shrink-0" />
-          <div className="text-xs text-[#697784] leading-relaxed prose-justify">
+        <div className="p-3 rounded-lg bg-[#F7F9FC] border border-[#DFE6EE] flex items-start gap-2.5">
+          <Info className="w-4 h-4 text-[#1E547A] mt-0.5 shrink-0" />
+          <div className="text-xs text-[#526071] leading-relaxed prose-justify">
             <span className="font-semibold text-[#10243A]">{transaction.paymentMode}: </span>
             Payment statuses in this build represent simulated workflow states for operational testing. Live escrow or payment settlement requires an accredited banking/mobile-money integration.
           </div>
         </div>
 
         {/* Summary grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 border-y border-[#E5E9ED] py-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 border-y border-[#DFE6EE] py-3.5">
           <div className="min-w-0">
-            <p className="text-xs text-[#697784]">Agreed Amount</p>
+            <p className="text-xs text-[#526071]">Agreed Amount</p>
             <p className="text-xl font-bold font-mono tabular-nums text-[#10243A] mt-0.5">
               {formatUSD(transaction.agreedAmountUsd)}
             </p>
-            <p className="text-xs text-[#697784] mt-0.5">{transaction.paymentStatus}</p>
+            <p className="text-xs text-[#526071] mt-0.5">{transaction.paymentStatus}</p>
           </div>
           <div className="min-w-0">
-            <p className="text-xs text-[#697784]">Parties</p>
+            <p className="text-xs text-[#526071]">Parties</p>
             <p className="text-sm font-semibold text-[#10243A] mt-0.5 truncate">
               Buyer: {transaction.buyerName}
             </p>
-            <p className="text-xs text-[#697784] truncate">Seller: {transaction.sellerName}</p>
+            <p className="text-xs text-[#526071] truncate">Seller: {transaction.sellerName}</p>
           </div>
           <div className="min-w-0">
-            <p className="text-xs text-[#697784]">Current State & Handover PIN</p>
+            <p className="text-xs text-[#526071]">Current State & Handover PIN</p>
             <div className="mt-1">
               <StatusLabel
                 tone={
@@ -151,21 +151,21 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
 
         {/* Logistics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div className="p-3 bg-[#FAFAF7] rounded border border-[#E5E9ED]">
+          <div className="p-3 bg-[#F7F9FC] rounded-lg border border-[#DFE6EE]">
             <p className="font-semibold text-[#10243A] inline-flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[#F28C28] shrink-0" />
+              <MapPin className="w-3.5 h-3.5 text-[#E67E17] shrink-0" />
               Collection & Origin
             </p>
-            <p className="text-[#697784] mt-1">{transaction.pickupLocation}</p>
-            <p className="text-[#697784] mt-0.5">Hub: {transaction.collectionCentreName}</p>
+            <p className="text-[#526071] mt-1">{transaction.pickupLocation}</p>
+            <p className="text-[#526071] mt-0.5">Hub: {transaction.collectionCentreName}</p>
           </div>
-          <div className="p-3 bg-[#FAFAF7] rounded border border-[#E5E9ED]">
+          <div className="p-3 bg-[#F7F9FC] rounded-lg border border-[#DFE6EE]">
             <p className="font-semibold text-[#10243A] inline-flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-[#245B83] shrink-0" />
+              <MapPin className="w-3.5 h-3.5 text-[#1E547A] shrink-0" />
               Delivery Destination
             </p>
-            <p className="text-[#697784] mt-1">{transaction.deliveryLocation}</p>
-            <p className="text-[#697784] mt-0.5">
+            <p className="text-[#526071] mt-1">{transaction.deliveryLocation}</p>
+            <p className="text-[#526071] mt-0.5">
               Transport Ref: {transaction.transportJobId || 'Pending partner assignment'}
             </p>
           </div>
@@ -263,7 +263,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             transaction.state !== 'Cancelled' &&
             transaction.state !== 'Disputed' && (
               <Button variant="secondary" size="sm" onClick={() => setShowDispute(true)}>
-                <AlertTriangle className="w-3.5 h-3.5 text-[#D64B4B]" />
+                <AlertTriangle className="w-3.5 h-3.5 text-[#C53939]" />
                 Report Issue / Dispute
               </Button>
             )}
@@ -272,20 +272,20 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         {/* Supporting documents */}
         <div>
           <h4 className="text-xs font-semibold text-[#10243A] mb-2">Supporting Trade Documents</h4>
-          <div className="divide-y divide-[#E5E9ED] border border-[#E5E9ED] rounded-md">
+          <div className="divide-y divide-[#DFE6EE] border border-[#DFE6EE] rounded-lg overflow-hidden">
             {transaction.documents.map((doc) => (
               <div
                 key={doc.ref}
                 className="px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs"
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <FileCheck2 className="w-4 h-4 text-[#245B83] shrink-0" />
+                  <FileCheck2 className="w-4 h-4 text-[#1E547A] shrink-0" />
                   <span className="font-medium text-[#10243A] truncate">{doc.name}</span>
-                  <span className="font-mono text-[#697784] shrink-0">{doc.ref}</span>
+                  <span className="font-mono text-[#526071] shrink-0">{doc.ref}</span>
                 </div>
                 <span
-                  className={`shrink-0 ${
-                    doc.verified ? 'text-[#21865B] font-semibold' : 'text-[#B27A15]'
+                  className={`shrink-0 font-semibold ${
+                    doc.verified ? 'text-[#1A7A50]' : 'text-[#9A630A]'
                   }`}
                 >
                   {doc.verified ? 'Verified' : 'Pending'}
@@ -298,25 +298,25 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         {/* Lifecycle progress strip */}
         <div>
           <h4 className="text-xs font-semibold text-[#10243A] mb-2">Event Timeline</h4>
-          <ol className="space-y-2.5 border-l border-[#E5E9ED] ml-2 pl-4">
+          <ol className="space-y-2.5 border-l border-[#DFE6EE] ml-2 pl-4">
             {transaction.timeline.map((evt) => (
               <li key={evt.id} className="relative">
                 <span className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-[#10243A] border-2 border-white" />
                 <div className="flex flex-wrap items-center justify-between gap-1.5">
                   <span className="text-xs font-semibold text-[#10243A]">{evt.state}</span>
-                  <span className="text-[11px] font-mono text-[#697784] shrink-0">
+                  <span className="text-[11px] font-mono text-[#526071] shrink-0">
                     {formatDateTime(evt.timestamp)}
                   </span>
                 </div>
-                <p className="text-xs text-[#697784] mt-0.5 leading-relaxed prose-justify">
+                <p className="text-xs text-[#526071] mt-0.5 leading-relaxed prose-justify">
                   {evt.actor}: {evt.note}
                 </p>
               </li>
             ))}
           </ol>
           {currentIdx >= 0 && currentIdx < LIFECYCLE_ORDER.length - 1 && (
-            <p className="text-xs text-[#697784] mt-2.5 inline-flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#245B83] shrink-0" />
+            <p className="text-xs text-[#526071] mt-2.5 inline-flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#1E547A] shrink-0" />
               Next milestone: {LIFECYCLE_ORDER[currentIdx + 1]}
             </p>
           )}
@@ -326,7 +326,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         {showDispute && (
           <form
             onSubmit={handleDisputeSubmit}
-            className="p-4 bg-[#FAFAF7] border border-[#D64B4B]/40 rounded-md space-y-3"
+            className="p-4 bg-[#F7F9FC] border border-[#C53939]/40 rounded-lg space-y-3"
           >
             <h4 className="text-sm font-bold text-[#10243A]">Open Trade Dispute</h4>
             <Input
@@ -358,7 +358,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
         {showReview && (
           <form
             onSubmit={handleReviewSubmit}
-            className="p-4 bg-[#FAFAF7] border border-[#E5E9ED] rounded-md space-y-3"
+            className="p-4 bg-[#F7F9FC] border border-[#DFE6EE] rounded-lg space-y-3"
           >
             <h4 className="text-sm font-bold text-[#10243A]">
               Review Seller: {transaction.sellerName}
@@ -369,17 +369,17 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                   key={star}
                   type="button"
                   onClick={() => setRating(star)}
-                  className="p-1"
+                  className="p-1 rounded focus-visible:outline-2 focus-visible:outline-[#F28C28]"
                   aria-label={`Rate ${star} out of 5`}
                 >
                   <Star
                     className={`w-5 h-5 ${
-                      star <= rating ? 'fill-[#F28C28] text-[#F28C28]' : 'text-[#E5E9ED]'
+                      star <= rating ? 'fill-[#F28C28] text-[#F28C28]' : 'text-[#CBD5E1]'
                     }`}
                   />
                 </button>
               ))}
-              <span className="text-xs font-mono text-[#10243A] ml-1">{rating}.0 / 5.0</span>
+              <span className="text-xs font-mono font-semibold text-[#10243A] ml-1">{rating}.0 / 5.0</span>
             </div>
             <Textarea
               label="Verification & Handover Experience"

@@ -75,7 +75,7 @@ export const MariketiLogo: React.FC<{
 };
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
+  variant?: 'primary' | 'accent' | 'secondary' | 'inverted' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -88,19 +88,21 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
     primary:
-      'bg-[#10243A] text-white hover:bg-[#091827] border border-transparent',
+      'bg-gradient-to-b from-[#16304E] to-[#0D1E32] text-white border border-[#0B1929] shadow-[0_1px_2px_rgba(9,24,39,0.22),inset_0_1px_0_rgba(255,255,255,0.12)] hover:from-[#1B3B60] hover:to-[#10243A] hover:shadow-[0_4px_12px_rgba(16,36,58,0.22)] active:scale-[0.985]',
     accent:
-      'bg-[#F28C28] text-[#091827] font-semibold hover:bg-[#DC7B1B] border border-transparent',
+      'bg-gradient-to-b from-[#F69B3D] to-[#E67E17] text-[#091827] font-semibold border border-[#D4700F]/30 shadow-[0_1px_2px_rgba(9,24,39,0.16),inset_0_1px_0_rgba(255,255,255,0.3)] hover:from-[#F8A54F] hover:to-[#DC7410] hover:shadow-[0_4px_14px_rgba(242,140,40,0.32)] active:scale-[0.985]',
     secondary:
-      'bg-white text-[#17212B] border border-[#E5E9ED] hover:bg-[#F4F6F7] hover:border-[#cfd6dd]',
+      'bg-white text-[#10243A] border border-[#D4DDE6] shadow-[0_1px_2px_rgba(16,36,58,0.04)] hover:bg-[#F7F9FC] hover:border-[#B6C3D1] hover:text-[#091827] active:scale-[0.985]',
+    inverted:
+      'bg-white/[0.08] text-white border border-white/25 backdrop-blur-xs hover:bg-white/[0.16] hover:border-white/45 active:scale-[0.985]',
     ghost:
-      'bg-transparent text-[#17212B] hover:bg-[#E5E9ED]/60 border border-transparent',
+      'bg-transparent text-[#10243A] hover:bg-[#E7EEF4] hover:text-[#091827] border border-transparent active:scale-[0.985]',
     danger:
-      'bg-[#D64B4B] text-white hover:bg-[#bc3c3c] border border-transparent',
+      'bg-gradient-to-b from-[#DA4F4F] to-[#C23939] text-white border border-[#AD2F2F] shadow-[0_1px_2px_rgba(194,57,57,0.24),inset_0_1px_0_rgba(255,255,255,0.14)] hover:from-[#CC4141] hover:to-[#AE2F2F] active:scale-[0.985]',
   };
 
   const sizes: Record<NonNullable<ButtonProps['size']>, string> = {
-    sm: 'h-9 px-3 text-xs',
+    sm: 'h-9 px-3.5 text-xs',
     md: 'h-10 px-4 text-sm',
     lg: 'h-11 px-5 text-sm',
   };
@@ -109,7 +111,7 @@ export const Button: React.FC<ButtonProps> = ({
     <button
       {...props}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap shrink-0 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F28C28] disabled:opacity-50 disabled:pointer-events-none',
+        'inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap shrink-0 transition-all duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F28C28] disabled:opacity-50 disabled:pointer-events-none',
         variants[variant],
         sizes[size],
         className
@@ -138,7 +140,7 @@ export const Input: React.FC<InputProps> = ({
   return (
     <div className="w-full space-y-1.5">
       {label && (
-        <label htmlFor={inputId} className="block text-xs font-medium text-[#17212B]">
+        <label htmlFor={inputId} className="block text-xs font-semibold text-[#10243A]">
           {label}
         </label>
       )}
@@ -146,15 +148,15 @@ export const Input: React.FC<InputProps> = ({
         id={inputId}
         {...props}
         className={cn(
-          'w-full h-10 rounded-md bg-white border border-[#E5E9ED] px-3 text-sm text-[#17212B] placeholder:text-[#697784]/75 transition-colors focus:outline-none focus:border-[#10243A] focus:ring-2 focus:ring-[#10243A]/10 disabled:bg-[#F4F6F7]',
-          error && 'border-[#D64B4B] focus:border-[#D64B4B] focus:ring-[#D64B4B]/10',
+          'w-full h-10 rounded-lg bg-white border border-[#D4DDE6] px-3 text-sm text-[#0F1B2A] placeholder:text-[#667587] shadow-[0_1px_2px_rgba(16,36,58,0.02)] transition-all duration-150 hover:border-[#B6C3D1] focus:outline-none focus:border-[#10243A] focus:ring-2 focus:ring-[#10243A]/12 disabled:bg-[#F3F6F9] disabled:text-[#526071]',
+          error && 'border-[#C53939] focus:border-[#C53939] focus:ring-[#C53939]/12',
           className
         )}
       />
       {error ? (
-        <p className="text-xs text-[#D64B4B]">{error}</p>
+        <p className="text-xs font-medium text-[#C53939]">{error}</p>
       ) : hint ? (
-        <p className="text-xs text-[#697784]">{hint}</p>
+        <p className="text-xs text-[#526071]">{hint}</p>
       ) : null}
     </div>
   );
@@ -177,7 +179,7 @@ export const Select: React.FC<SelectProps> = ({
   return (
     <div className="w-full space-y-1.5">
       {label && (
-        <label htmlFor={selectId} className="block text-xs font-medium text-[#17212B]">
+        <label htmlFor={selectId} className="block text-xs font-semibold text-[#10243A]">
           {label}
         </label>
       )}
@@ -185,14 +187,14 @@ export const Select: React.FC<SelectProps> = ({
         id={selectId}
         {...props}
         className={cn(
-          'w-full h-10 rounded-md bg-white border border-[#E5E9ED] px-3 text-sm text-[#17212B] transition-colors focus:outline-none focus:border-[#10243A] focus:ring-2 focus:ring-[#10243A]/10',
-          error && 'border-[#D64B4B]',
+          'w-full h-10 rounded-lg bg-white border border-[#D4DDE6] px-3 text-sm text-[#0F1B2A] shadow-[0_1px_2px_rgba(16,36,58,0.02)] transition-all duration-150 hover:border-[#B6C3D1] focus:outline-none focus:border-[#10243A] focus:ring-2 focus:ring-[#10243A]/12',
+          error && 'border-[#C53939]',
           className
         )}
       >
         {children}
       </select>
-      {error && <p className="text-xs text-[#D64B4B]">{error}</p>}
+      {error && <p className="text-xs font-medium text-[#C53939]">{error}</p>}
     </div>
   );
 };
@@ -213,7 +215,7 @@ export const Textarea: React.FC<TextareaProps> = ({
   return (
     <div className="w-full space-y-1.5">
       {label && (
-        <label htmlFor={areaId} className="block text-xs font-medium text-[#17212B]">
+        <label htmlFor={areaId} className="block text-xs font-semibold text-[#10243A]">
           {label}
         </label>
       )}
@@ -221,12 +223,12 @@ export const Textarea: React.FC<TextareaProps> = ({
         id={areaId}
         {...props}
         className={cn(
-          'w-full rounded-md bg-white border border-[#E5E9ED] px-3 py-2.5 text-sm text-[#17212B] placeholder:text-[#697784]/75 transition-colors focus:outline-none focus:border-[#10243A] focus:ring-2 focus:ring-[#10243A]/10',
-          error && 'border-[#D64B4B]',
+          'w-full rounded-lg bg-white border border-[#D4DDE6] px-3 py-2.5 text-sm text-[#0F1B2A] placeholder:text-[#667587] shadow-[0_1px_2px_rgba(16,36,58,0.02)] transition-all duration-150 hover:border-[#B6C3D1] focus:outline-none focus:border-[#10243A] focus:ring-2 focus:ring-[#10243A]/12',
+          error && 'border-[#C53939]',
           className
         )}
       />
-      {error && <p className="text-xs text-[#D64B4B]">{error}</p>}
+      {error && <p className="text-xs font-medium text-[#C53939]">{error}</p>}
     </div>
   );
 };
@@ -235,7 +237,12 @@ export const Card: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className }) => (
-  <div className={cn('bg-white border border-[#E5E9ED] rounded-lg', className)}>
+  <div
+    className={cn(
+      'bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)]',
+      className
+    )}
+  >
     {children}
   </div>
 );
@@ -246,11 +253,11 @@ export const StatusLabel: React.FC<{
   className?: string;
 }> = ({ tone, label, className }) => {
   const styles = {
-    success: 'text-[#21865B]',
-    warning: 'text-[#B27A15]',
-    danger: 'text-[#D64B4B]',
-    info: 'text-[#245B83]',
-    neutral: 'text-[#697784]',
+    success: 'text-[#1A7A50]',
+    warning: 'text-[#9A630A]',
+    danger: 'text-[#C53939]',
+    info: 'text-[#1E547A]',
+    neutral: 'text-[#526071]',
   };
   const Icon =
     tone === 'success'
@@ -286,7 +293,7 @@ export const SafeImage: React.FC<{
     return (
       <div
         className={cn(
-          'flex flex-col items-center justify-center bg-[#10243A] text-white/80 p-4 text-center',
+          'flex flex-col items-center justify-center bg-gradient-to-br from-[#10243A] to-[#091827] text-slate-200 p-4 text-center',
           className
         )}
         role="img"
@@ -334,7 +341,7 @@ export const Modal: React.FC<{
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#091827]/60 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#071320]/65 backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -344,20 +351,20 @@ export const Modal: React.FC<{
     >
       <div
         className={cn(
-          'w-full bg-white border border-[#E5E9ED] rounded-lg max-h-[90vh] flex flex-col overflow-hidden shadow-xl',
+          'w-full bg-white border border-[#DFE6EE] rounded-xl max-h-[90vh] flex flex-col overflow-hidden shadow-[0_24px_60px_rgba(7,19,32,0.28)]',
           maxWidth
         )}
       >
-        <div className="flex items-start justify-between gap-3 px-4 sm:px-5 py-3.5 border-b border-[#E5E9ED]">
+        <div className="flex items-start justify-between gap-3 px-4 sm:px-5 py-3.5 border-b border-[#DFE6EE] bg-[#F7F9FC]/60">
           <div className="min-w-0">
             <h3 className="text-base font-bold text-[#10243A] leading-snug">{title}</h3>
-            {subtitle && <p className="text-xs text-[#697784] mt-0.5 truncate">{subtitle}</p>}
+            {subtitle && <p className="text-xs text-[#526071] mt-0.5 truncate">{subtitle}</p>}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="h-9 w-9 -mr-1.5 -mt-1 rounded-md flex items-center justify-center text-[#697784] hover:text-[#10243A] hover:bg-[#F4F6F7] focus-visible:outline-2 focus-visible:outline-[#F28C28] shrink-0"
+            className="h-9 w-9 -mr-1.5 -mt-1 rounded-lg flex items-center justify-center text-[#526071] hover:text-[#10243A] hover:bg-[#E7EEF4] transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28] shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -391,7 +398,7 @@ export const Drawer: React.FC<{
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-[#091827]/55 backdrop-blur-[1px]"
+      className="fixed inset-0 z-50 flex justify-end bg-[#071320]/60 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-label={title}
@@ -399,14 +406,14 @@ export const Drawer: React.FC<{
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-2xl bg-white h-full border-l border-[#E5E9ED] flex flex-col shadow-xl">
-        <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 border-b border-[#E5E9ED]">
+      <div className="w-full max-w-2xl bg-white h-full border-l border-[#DFE6EE] flex flex-col shadow-[0_24px_60px_rgba(7,19,32,0.28)]">
+        <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 border-b border-[#DFE6EE] bg-[#F7F9FC]/60">
           <h3 className="text-base font-bold text-[#10243A] truncate">{title}</h3>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close drawer"
-            className="h-9 w-9 -mr-1.5 rounded-md flex items-center justify-center text-[#697784] hover:text-[#10243A] hover:bg-[#F4F6F7] focus-visible:outline-2 focus-visible:outline-[#F28C28] shrink-0"
+            className="h-9 w-9 -mr-1.5 rounded-lg flex items-center justify-center text-[#526071] hover:text-[#10243A] hover:bg-[#E7EEF4] transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28] shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -422,9 +429,9 @@ export const EmptyState: React.FC<{
   description: string;
   action?: React.ReactNode;
 }> = ({ title, description, action }) => (
-  <div className="bg-white border border-[#E5E9ED] rounded-lg px-5 py-9 text-center">
+  <div className="bg-white border border-[#DFE6EE] rounded-xl px-5 py-9 text-center shadow-[0_1px_3px_rgba(16,36,58,0.03)]">
     <p className="text-base font-semibold text-[#10243A]">{title}</p>
-    <p className="text-sm text-[#697784] mt-1.5 max-w-md mx-auto leading-relaxed">{description}</p>
+    <p className="text-sm text-[#526071] mt-1.5 max-w-md mx-auto leading-relaxed">{description}</p>
     {action && <div className="mt-4 flex justify-center">{action}</div>}
   </div>
 );
@@ -434,13 +441,13 @@ export const SkeletonGrid: React.FC<{ count?: number }> = ({ count = 6 }) => (
     {Array.from({ length: count }).map((_, idx) => (
       <div
         key={idx}
-        className="bg-white border border-[#E5E9ED] rounded-lg overflow-hidden animate-pulse"
+        className="bg-white border border-[#DFE6EE] rounded-xl overflow-hidden animate-pulse"
       >
-        <div className="aspect-[4/3] bg-[#E5E9ED]" />
+        <div className="aspect-[4/3] bg-[#E5ECF2]" />
         <div className="p-5 space-y-3">
-          <div className="h-3 w-1/3 bg-[#E5E9ED] rounded" />
-          <div className="h-5 w-4/5 bg-[#E5E9ED] rounded" />
-          <div className="h-4 w-1/2 bg-[#E5E9ED] rounded" />
+          <div className="h-3 w-1/3 bg-[#E5ECF2] rounded" />
+          <div className="h-5 w-4/5 bg-[#E5ECF2] rounded" />
+          <div className="h-4 w-1/2 bg-[#E5ECF2] rounded" />
         </div>
       </div>
     ))}
@@ -468,29 +475,29 @@ export const ToastStack: React.FC<{
             : Info;
         const iconColor =
           t.tone === 'success'
-            ? 'text-[#21865B]'
+            ? 'text-[#34D399]'
             : t.tone === 'warning'
-            ? 'text-[#D99A2B]'
+            ? 'text-[#F5B041]'
             : t.tone === 'error'
-            ? 'text-[#D64B4B]'
-            : 'text-[#245B83]';
+            ? 'text-[#F87171]'
+            : 'text-[#60A5FA]';
         return (
           <div
             key={t.id}
-            className="pointer-events-auto bg-[#091827] text-white border border-white/10 rounded-lg p-3.5 shadow-lg flex items-start gap-2.5"
+            className="pointer-events-auto bg-[#0B1C2F] text-white border border-white/15 rounded-xl p-3.5 shadow-[0_12px_32px_rgba(7,19,32,0.38)] flex items-start gap-2.5"
           >
             <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', iconColor)} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold">{t.title}</p>
+              <p className="text-sm font-semibold text-white">{t.title}</p>
               {t.description && (
-                <p className="text-xs text-white/75 mt-0.5 leading-relaxed">{t.description}</p>
+                <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">{t.description}</p>
               )}
             </div>
             <button
               type="button"
               onClick={() => onDismiss(t.id)}
               aria-label="Dismiss notification"
-              className="text-white/60 hover:text-white p-0.5"
+              className="text-slate-400 hover:text-white p-0.5 rounded transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -507,11 +514,16 @@ export const MetricCell: React.FC<{
   detail?: string;
   className?: string;
 }> = ({ label, value, detail, className }) => (
-  <div className={cn('bg-white border border-[#E5E9ED] rounded-lg p-4 min-w-0', className)}>
-    <p className="text-xs font-medium text-[#697784] truncate">{label}</p>
+  <div
+    className={cn(
+      'bg-white border border-[#DFE6EE] rounded-xl p-4 min-w-0 shadow-[0_1px_3px_rgba(16,36,58,0.03)]',
+      className
+    )}
+  >
+    <p className="text-xs font-semibold text-[#526071] truncate">{label}</p>
     <p className="mt-1 text-xl sm:text-2xl font-bold text-[#10243A] font-mono tabular-nums tracking-tight truncate">
       {value}
     </p>
-    {detail && <p className="mt-0.5 text-[11px] text-[#697784] truncate">{detail}</p>}
+    {detail && <p className="mt-0.5 text-[11px] text-[#526071] truncate">{detail}</p>}
   </div>
 );

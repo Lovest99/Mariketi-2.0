@@ -10,7 +10,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useMariketi } from '../../context/MariketiContext';
-import { cn, formatDateTime } from '../../lib/utils';
+import { cn, formatDateTime, getCountryFlag } from '../../lib/utils';
 import type { UserRole } from '../../types/mariketi';
 import { Button, Drawer, MariketiLogo } from '../ui/DesignSystem';
 
@@ -78,13 +78,13 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
   const activeItem = navItems.find((n) => n.id === activeTab);
 
   const renderSidebarContent = () => (
-    <div className="flex flex-col h-full bg-[#091827] text-white">
+    <div className="flex flex-col h-full bg-gradient-to-b from-[#0C1E33] via-[#091827] to-[#071320] text-white border-r border-white/[0.08]">
       <div className="h-14 sm:h-16 px-4 flex items-center justify-between border-b border-white/10">
         <MariketiLogo inverted onClick={() => navigatePublic('home')} />
         <button
           type="button"
           onClick={() => setMobileMenuOpen(false)}
-          className="lg:hidden h-9 w-9 flex items-center justify-center text-white/70 hover:text-white rounded-md"
+          className="lg:hidden h-9 w-9 flex items-center justify-center text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
           aria-label="Close navigation"
         >
           <X className="w-5 h-5" />
@@ -96,21 +96,23 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
         <button
           type="button"
           onClick={() => setRoleSwitcherOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-white/5 hover:bg-white/10 transition-colors text-left"
+          className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.11] border border-white/[0.08] transition-all duration-150 text-left focus-visible:outline-2 focus-visible:outline-[#F28C28]"
         >
           <div className="min-w-0">
             <p className="text-xs font-semibold text-white truncate">{workspaceTitle}</p>
-            <p className="text-[11px] text-white/60 truncate">{currentUser?.name}</p>
+            <p className="text-[11px] text-slate-300 truncate">
+              {getCountryFlag(currentUser?.country)} {currentUser?.name}
+            </p>
           </div>
           <ChevronDown
             className={cn(
-              'w-4 h-4 text-white/60 shrink-0 transition-transform',
+              'w-4 h-4 text-slate-300 shrink-0 transition-transform duration-150',
               roleSwitcherOpen && 'rotate-180'
             )}
           />
         </button>
         {roleSwitcherOpen && (
-          <div className="mt-2 py-1 rounded-md bg-[#10243A] border border-white/10 space-y-0.5">
+          <div className="mt-2 py-1 rounded-lg bg-[#10263F] border border-white/12 shadow-lg space-y-0.5">
             {ROLE_LABELS.map((r) => (
               <button
                 key={r.role}
@@ -122,7 +124,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
                 }}
                 className={cn(
                   'w-full px-3 py-1.5 text-xs flex items-center justify-between text-left hover:bg-white/10 transition-colors',
-                  currentUser?.role === r.role ? 'text-[#F28C28] font-semibold' : 'text-white/80'
+                  currentUser?.role === r.role ? 'text-[#F69B3D] font-semibold' : 'text-slate-200'
                 )}
               >
                 <span>{r.label}</span>
@@ -134,7 +136,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-0.5" aria-label="Workspace navigation">
+      <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1" aria-label="Workspace navigation">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.id === activeTab;
@@ -147,20 +149,20 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
                 setMobileMenuOpen(false);
               }}
               className={cn(
-                'w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium transition-colors whitespace-nowrap',
+                'w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 whitespace-nowrap focus-visible:outline-2 focus-visible:outline-[#F28C28]',
                 isActive
-                  ? 'bg-[#10243A] text-white'
-                  : 'text-white/70 hover:text-white hover:bg-white/5'
+                  ? 'bg-white/[0.11] text-white ring-1 ring-inset ring-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
+                  : 'text-slate-300 hover:text-white hover:bg-white/[0.06]'
               )}
             >
               <span className="flex items-center gap-2.5 min-w-0">
                 <Icon
-                  className={cn('w-4 h-4 shrink-0', isActive ? 'text-[#F28C28]' : 'text-white/60')}
+                  className={cn('w-4 h-4 shrink-0', isActive ? 'text-[#F69B3D]' : 'text-slate-400')}
                 />
                 <span className="truncate">{item.label}</span>
               </span>
               {item.badge !== undefined && item.badge > 0 && (
-                <span className="font-mono text-[11px] font-semibold text-[#F28C28] tabular-nums shrink-0">
+                <span className="font-mono text-[11px] font-semibold text-[#F69B3D] tabular-nums shrink-0">
                   {item.badge}
                 </span>
               )}
@@ -174,25 +176,25 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
         <button
           type="button"
           onClick={() => navigatePublic('marketplace')}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium text-white/75 hover:text-white hover:bg-white/5"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-200 hover:text-white hover:bg-white/[0.07] transition-colors"
         >
-          <Globe className="w-4 h-4" />
+          <Globe className="w-4 h-4 text-slate-400" />
           Public Marketplace
         </button>
         <button
           type="button"
           onClick={resetDemoData}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium text-white/60 hover:text-white hover:bg-white/5"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.07] transition-colors"
         >
-          <RotateCcw className="w-4 h-4" />
+          <RotateCcw className="w-4 h-4 text-slate-400" />
           Reset Demo Data
         </button>
         <button
           type="button"
           onClick={logout}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium text-white/75 hover:text-white hover:bg-white/5"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-200 hover:text-white hover:bg-white/[0.07] transition-colors"
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-4 h-4 text-slate-400" />
           Sign Out
         </button>
       </div>
@@ -200,7 +202,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
   );
 
   return (
-    <div className="min-h-screen flex bg-[#F4F6F7]">
+    <div className="min-h-screen flex bg-[#F3F6F9]">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block w-60 shrink-0 sticky top-0 h-screen">
         {renderSidebarContent()}
@@ -212,7 +214,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
           <div className="w-64 max-w-[82vw] h-full">{renderSidebarContent()}</div>
           <button
             type="button"
-            className="flex-1 bg-[#091827]/60"
+            className="flex-1 bg-[#071320]/65 backdrop-blur-[1px]"
             aria-label="Close sidebar overlay"
             onClick={() => setMobileMenuOpen(false)}
           />
@@ -221,19 +223,19 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 sm:h-16 bg-white border-b border-[#E5E9ED] px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-30">
+        <header className="h-14 sm:h-16 bg-white/95 backdrop-blur-sm border-b border-[#DFE6EE] shadow-[0_1px_2px_rgba(16,36,58,0.03)] px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-30">
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden h-9 w-9 -ml-1 flex items-center justify-center text-[#10243A] hover:bg-[#F4F6F7] rounded-md shrink-0"
+              className="lg:hidden h-9 w-9 -ml-1 flex items-center justify-center text-[#10243A] hover:bg-[#EEF3F8] rounded-lg transition-colors shrink-0"
               aria-label="Open navigation menu"
             >
               <Menu className="w-5 h-5" />
             </button>
             <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm min-w-0">
-              <span className="text-[#697784] hidden sm:inline truncate">{workspaceTitle}</span>
-              <span className="text-[#697784] hidden sm:inline" aria-hidden="true">
+              <span className="text-[#526071] hidden sm:inline truncate">{workspaceTitle}</span>
+              <span className="text-[#94A3B8] hidden sm:inline" aria-hidden="true">
                 /
               </span>
               <span className="font-semibold text-[#10243A] truncate">
@@ -248,11 +250,11 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
               type="button"
               onClick={() => setNotifOpen(true)}
               aria-label="Open notifications"
-              className="relative h-9 w-9 rounded-md border border-[#E5E9ED] bg-white hover:bg-[#F4F6F7] flex items-center justify-center text-[#10243A] shrink-0"
+              className="relative h-9 w-9 rounded-lg border border-[#D4DDE6] bg-white hover:bg-[#F7F9FC] hover:border-[#B6C3D1] flex items-center justify-center text-[#10243A] transition-all duration-150 focus-visible:outline-2 focus-visible:outline-[#F28C28] shrink-0"
             >
               <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-[#F28C28] text-[#091827] font-mono text-[10px] font-bold flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-[#F28C28] text-[#091827] font-mono text-[10px] font-bold flex items-center justify-center shadow-xs">
                   {unreadCount}
                 </span>
               )}
@@ -272,8 +274,8 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
         title={`Notifications (${unreadCount} unread)`}
       >
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-[#697784]">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-[#526071]">
               Real-time alerts for offers, verifications, logistics, and transactions.
             </p>
             {unreadCount > 0 && (
@@ -282,23 +284,23 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
               </Button>
             )}
           </div>
-          <div className="divide-y divide-[#E5E9ED] border border-[#E5E9ED] rounded-lg">
+          <div className="divide-y divide-[#DFE6EE] border border-[#DFE6EE] rounded-xl overflow-hidden">
             {roleNotifications.map((n) => (
               <button
                 key={n.id}
                 type="button"
                 onClick={() => markNotificationRead(n.id)}
                 className={cn(
-                  'w-full text-left p-4 transition-colors hover:bg-[#F4F6F7]',
-                  !n.read && 'bg-[#FAFAF7]'
+                  'w-full text-left p-4 transition-colors hover:bg-[#EEF3F8]/70',
+                  !n.read && 'bg-[#F7F9FC]'
                 )}
               >
-                <div className="flex items-center justify-between gap-2 text-xs text-[#697784]">
+                <div className="flex items-center justify-between gap-2 text-xs text-[#526071]">
                   <span className="font-semibold text-[#10243A] capitalize">{n.category}</span>
                   <span className="font-mono text-[11px]">{formatDateTime(n.timestamp)}</span>
                 </div>
                 <p className="text-sm font-semibold text-[#10243A] mt-1">{n.title}</p>
-                <p className="text-xs text-[#697784] mt-0.5 leading-relaxed">{n.body}</p>
+                <p className="text-xs text-[#526071] mt-0.5 leading-relaxed">{n.body}</p>
               </button>
             ))}
           </div>

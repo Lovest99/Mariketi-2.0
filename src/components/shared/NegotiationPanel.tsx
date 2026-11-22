@@ -85,11 +85,11 @@ export const NegotiationPanel: React.FC<NegotiationPanelProps> = ({
         return (
           <div
             key={offer.id}
-            className="bg-white border border-[#E5E9ED] rounded-lg p-4 space-y-3.5"
+            className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 space-y-3.5"
           >
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#697784]">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#526071]">
                   <span className="font-mono font-semibold text-[#10243A]">{offer.reference}</span>
                   <span aria-hidden="true">·</span>
                   <span className="font-mono">{offer.listingRef}</span>
@@ -107,16 +107,16 @@ export const NegotiationPanel: React.FC<NegotiationPanelProps> = ({
                 <p className="text-lg sm:text-xl font-bold font-mono tabular-nums text-[#10243A]">
                   {formatUSD(offer.currentAmountUsd)}
                 </p>
-                <p className="text-xs text-[#697784] tabular-nums">
+                <p className="text-xs text-[#526071] tabular-nums">
                   {offer.quantity} head · {formatUSD(Math.round(offer.currentAmountUsd / Math.max(1, offer.quantity)))}/head
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#E5E9ED]">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#DFE6EE]">
               <div className="flex flex-wrap items-center gap-4 text-xs">
                 <StatusLabel tone={tone} label={offer.status.replace('_', ' ').toUpperCase()} />
-                <span className="text-[#697784] inline-flex items-center gap-1">
+                <span className="text-[#526071] inline-flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />
                   Expires {formatDateTime(offer.expiresAt)}
                 </span>
@@ -145,7 +145,7 @@ export const NegotiationPanel: React.FC<NegotiationPanelProps> = ({
                       size="sm"
                       onClick={() => rejectOffer(offer.id)}
                     >
-                      <XCircle className="w-3.5 h-3.5 text-[#D64B4B]" />
+                      <XCircle className="w-3.5 h-3.5 text-[#C53939]" />
                       Decline
                     </Button>
                   </>
@@ -163,7 +163,7 @@ export const NegotiationPanel: React.FC<NegotiationPanelProps> = ({
                 )}
 
                 {offer.status === 'converted' && (
-                  <span className="text-xs font-medium text-[#21865B]">
+                  <span className="text-xs font-semibold text-[#1A7A50]">
                     Converted to active transaction
                   </span>
                 )}
@@ -171,30 +171,30 @@ export const NegotiationPanel: React.FC<NegotiationPanelProps> = ({
             </div>
 
             {/* Immutable Offer History */}
-            <div className="pt-3 border-t border-[#E5E9ED]">
+            <div className="pt-3 border-t border-[#DFE6EE]">
               <p className="text-xs font-semibold text-[#10243A] inline-flex items-center gap-1.5 mb-2.5">
-                <History className="w-3.5 h-3.5 text-[#697784]" />
+                <History className="w-3.5 h-3.5 text-[#526071]" />
                 Immutable Negotiation History ({offer.history.length} entries)
               </p>
               <div className="space-y-2">
                 {offer.history.map((entry) => (
                   <div
                     key={entry.id}
-                    className="flex flex-col sm:flex-row sm:items-start justify-between gap-1.5 text-xs py-2 px-3 bg-[#FAFAF7] rounded border border-[#E5E9ED]"
+                    className="flex flex-col sm:flex-row sm:items-start justify-between gap-1.5 text-xs py-2.5 px-3 bg-[#F7F9FC] rounded-lg border border-[#DFE6EE]"
                   >
                     <div className="space-y-0.5 min-w-0 flex-1">
                       <span className="font-semibold text-[#10243A]">
                         {entry.actorName} ({entry.actorRole})
                       </span>{' '}
-                      <span className="text-[#697784]">
+                      <span className="text-[#526071]">
                         {entry.action.replace('_', ' ')} —{' '}
                       </span>
                       <span className="font-mono font-semibold text-[#10243A] tabular-nums">
                         {formatUSD(entry.amountUsd)} ({entry.quantity} head)
                       </span>
-                      <p className="text-[#697784] prose-justify leading-relaxed">{entry.note}</p>
+                      <p className="text-[#526071] prose-justify leading-relaxed">{entry.note}</p>
                     </div>
-                    <span className="font-mono text-[11px] text-[#697784] whitespace-nowrap shrink-0">
+                    <span className="font-mono text-[11px] text-[#526071] whitespace-nowrap shrink-0">
                       {formatDateTime(entry.timestamp)}
                     </span>
                   </div>
@@ -258,7 +258,7 @@ export const NegotiationPanel: React.FC<NegotiationPanelProps> = ({
         subtitle={txnOffer ? `${txnOffer.reference} · Agreed ${formatUSD(txnOffer.currentAmountUsd)}` : ''}
       >
         <form onSubmit={handleInitiateTxn} className="space-y-4">
-          <div className="p-3 bg-[#FAFAF7] border border-[#E5E9ED] rounded-md text-xs text-[#697784] leading-relaxed prose-justify">
+          <div className="p-3 bg-[#F7F9FC] border border-[#DFE6EE] rounded-lg text-xs text-[#526071] leading-relaxed prose-justify">
             <strong className="text-[#10243A] block mb-1 text-left">Simulated Payment Environment Notice</strong>
             MARIKETI currently runs in a simulated settlement environment. No real bank transfer, card charge, or live escrow funds are collected during this workflow.
           </div>

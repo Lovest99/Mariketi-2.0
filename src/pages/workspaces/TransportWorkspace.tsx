@@ -10,7 +10,7 @@ import {
   Truck,
 } from 'lucide-react';
 import { useMariketi } from '../../context/MariketiContext';
-import { formatDateTime, formatUSD } from '../../lib/utils';
+import { formatDateTime, formatUSD, getCountry, getCountryFlag } from '../../lib/utils';
 import type { TransportJob } from '../../types/mariketi';
 import { WorkspaceShell, type NavItem } from '../../components/layout/WorkspaceShell';
 import {
@@ -43,6 +43,7 @@ export const TransportWorkspace: React.FC = () => {
   const [podCode, setPodCode] = useState('');
   const [podNotes, setPodNotes] = useState('All livestock offloaded in healthy condition, zero transit injuries.');
 
+  const defaultDialPrefix = `${getCountry(currentUser?.country).dialCode} `;
   const [addVehOpen, setAddVehOpen] = useState(false);
   const [vehForm, setVehForm] = useState({
     registration: '',
@@ -50,7 +51,7 @@ export const TransportWorkspace: React.FC = () => {
     capacityHead: '30',
     suitableFor: 'Cattle, Goats, Sheep',
     driverName: '',
-    driverPhone: '+263 77 ',
+    driverPhone: defaultDialPrefix,
   });
 
   const available = transportJobs.filter((j) => j.status === 'Available');
@@ -114,7 +115,7 @@ export const TransportWorkspace: React.FC = () => {
       capacityHead: '30',
       suitableFor: 'Cattle, Goats, Sheep',
       driverName: '',
-      driverPhone: '+263 77 ',
+      driverPhone: defaultDialPrefix,
     });
   };
 
@@ -133,11 +134,11 @@ export const TransportWorkspace: React.FC = () => {
       {tab === 'overview' && (
         <div className="space-y-5">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#10243A]">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#10243A] tracking-tight">
               {currentUser?.organization || 'Savannah Livestock Haulage'}
             </h1>
-            <p className="text-sm text-[#697784] mt-0.5">
-              Corridors: {currentUser?.meta?.operatingCorridors || 'Bulawayo–Gweru–Harare–Beitbridge'} · Accredited livestock transport dispatch.
+            <p className="text-sm text-[#526071] mt-0.5">
+              {getCountryFlag(currentUser?.country)} Corridors: {currentUser?.meta?.operatingCorridors || 'Southern & East Africa Cross-Border Corridors'} · Accredited livestock transport dispatch.
             </p>
           </div>
 
@@ -148,16 +149,16 @@ export const TransportWorkspace: React.FC = () => {
             <MetricCell label="Recorded Earnings" value={formatUSD(totalEarnings)} detail="Completed haulage fees" />
           </div>
 
-          <div className="bg-white border border-[#E5E9ED] rounded-lg p-4 sm:p-5 space-y-3.5">
+          <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 sm:p-5 space-y-3.5">
             <h2 className="text-sm font-bold text-[#10243A]">Live Consignment Board</h2>
             <div className="space-y-3">
               {transportJobs.map((job) => (
                 <div
                   key={job.id}
-                  className="p-3.5 sm:p-4 rounded-md bg-[#FAFAF7] border border-[#E5E9ED] flex flex-col sm:flex-row sm:items-center justify-between gap-3.5"
+                  className="p-3.5 sm:p-4 rounded-lg bg-[#F7F9FC] border border-[#DFE6EE] flex flex-col sm:flex-row sm:items-center justify-between gap-3.5"
                 >
                   <div className="space-y-1 min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#697784]">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#526071]">
                       <span className="font-mono font-bold text-[#10243A]">{job.reference}</span>
                       <span aria-hidden="true">·</span>
                       <span>{job.category} ({job.quantity} head)</span>
@@ -166,8 +167,10 @@ export const TransportWorkspace: React.FC = () => {
                       <span aria-hidden="true">·</span>
                       <span>Scheduled {job.scheduledDate}</span>
                     </div>
-                    <p className="text-sm font-bold text-[#10243A] leading-snug">{job.listingTitle}</p>
-                    <p className="text-xs text-[#697784] flex items-start gap-1">
+                    <p className="text-sm font-bold text-[#10243A] leading-snug">
+                      {job.country ? `${getCountryFlag(job.country)} ` : ''}{job.listingTitle}
+                    </p>
+                    <p className="text-xs text-[#526071] flex items-start gap-1">
                       <MapPin className="w-3.5 h-3.5 text-[#F28C28] shrink-0 mt-0.5" />
                       <span>
                         {job.pickupLocation} → {job.destination}
@@ -175,7 +178,7 @@ export const TransportWorkspace: React.FC = () => {
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-[#E5E9ED] shrink-0">
+                  <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-[#DFE6EE] shrink-0">
                     <div className="text-left sm:text-right">
                       <p className="font-mono text-base font-bold text-[#10243A] tabular-nums">
                         {formatUSD(job.feeUsd)}
@@ -232,7 +235,7 @@ export const TransportWorkspace: React.FC = () => {
           tab === 'available' ? available : tab === 'active' ? active : delivered;
         return (
           <div className="space-y-4">
-            <h1 className="text-xl font-bold text-[#10243A]">
+            <h1 className="text-xl font-bold text-[#10243A] tracking-tight">
               {tab === 'available'
                 ? 'Available Livestock Haulage Jobs'
                 : tab === 'active'
@@ -253,26 +256,26 @@ export const TransportWorkspace: React.FC = () => {
             ) : (
               <div className="space-y-3">
                 {filteredJobs.map((job) => (
-                  <div key={job.id} className="bg-white border border-[#E5E9ED] rounded-lg p-4 space-y-3">
+                  <div key={job.id} className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-mono text-[#697784]">
+                        <p className="text-xs font-mono text-[#526071]">
                           {job.reference} · Txn {job.transactionRef} · {job.distanceKm} km
                         </p>
                         <h2 className="text-[15px] font-bold text-[#10243A] mt-0.5 leading-snug">
-                          {job.listingTitle} ({job.quantity} head)
+                          {job.country ? `${getCountryFlag(job.country)} ` : ''}{job.listingTitle} ({job.quantity} head)
                         </h2>
-                        <p className="text-xs text-[#697784] mt-1">
-                          <strong>Pickup:</strong> {job.pickupLocation}
+                        <p className="text-xs text-[#526071] mt-1">
+                          <strong className="text-[#10243A]">Pickup:</strong> {job.pickupLocation}
                         </p>
-                        <p className="text-xs text-[#697784]">
-                          <strong>Destination:</strong> {job.destination}
+                        <p className="text-xs text-[#526071]">
+                          <strong className="text-[#10243A]">Destination:</strong> {job.destination}
                         </p>
-                        <p className="text-xs text-[#697784] mt-1">
-                          <strong>Requirements:</strong> {job.requirements}
+                        <p className="text-xs text-[#526071] mt-1">
+                          <strong className="text-[#10243A]">Requirements:</strong> {job.requirements}
                         </p>
                       </div>
-                      <div className="flex sm:flex-col items-center sm:items-end justify-between gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E5E9ED]">
+                      <div className="flex sm:flex-col items-center sm:items-end justify-between gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#DFE6EE]">
                         <p className="font-mono text-lg font-bold text-[#10243A] tabular-nums">
                           {formatUSD(job.feeUsd)}
                         </p>
@@ -284,22 +287,22 @@ export const TransportWorkspace: React.FC = () => {
                     </div>
 
                     {job.assignedVehicle && (
-                      <p className="text-xs text-[#697784] pt-2 border-t border-[#E5E9ED]">
+                      <p className="text-xs text-[#526071] pt-2 border-t border-[#DFE6EE]">
                         Assigned Rig: <strong className="text-[#10243A]">{job.assignedVehicle}</strong> · Driver:{' '}
                         <strong className="text-[#10243A]">{job.assignedDriver}</strong>
                       </p>
                     )}
 
                     {job.podDeliveredAt && (
-                      <div className="p-3 rounded bg-[#FAFAF7] border border-[#E5E9ED] text-xs space-y-1">
-                        <p className="font-semibold text-[#21865B] inline-flex items-center gap-1.5">
+                      <div className="p-3.5 rounded-lg bg-[#F7F9FC] border border-[#DFE6EE] text-xs space-y-1">
+                        <p className="font-semibold text-[#1A7A50] inline-flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4 shrink-0" />
                           Proof of Delivery Verified · {formatDateTime(job.podDeliveredAt)}
                         </p>
-                        <p className="text-[#697784]">
-                          Signed by: {job.podRecipient} · Handover Code: <span className="font-mono">{job.podCode}</span>
+                        <p className="text-[#526071]">
+                          Signed by: {job.podRecipient} · Handover Code: <span className="font-mono text-[#10243A]">{job.podCode}</span>
                         </p>
-                        <p className="text-[#697784] leading-relaxed prose-justify">{job.podConditionNotes}</p>
+                        <p className="text-[#526071] leading-relaxed prose-justify">{job.podConditionNotes}</p>
                       </div>
                     )}
 
@@ -346,7 +349,7 @@ export const TransportWorkspace: React.FC = () => {
       {tab === 'fleet' && (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-xl font-bold text-[#10243A]">Accredited Vehicles & Drivers</h1>
+            <h1 className="text-xl font-bold text-[#10243A] tracking-tight">Accredited Vehicles & Drivers</h1>
             <Button variant="primary" size="sm" onClick={() => setAddVehOpen(true)}>
               <Plus className="w-4 h-4" />
               Add Vehicle
@@ -354,7 +357,7 @@ export const TransportWorkspace: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {vehicles.map((v) => (
-              <div key={v.id} className="bg-white border border-[#E5E9ED] rounded-lg p-4 space-y-2">
+              <div key={v.id} className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-sm font-bold text-[#10243A]">{v.registration}</span>
                   <StatusLabel
@@ -362,11 +365,11 @@ export const TransportWorkspace: React.FC = () => {
                     label={v.status}
                   />
                 </div>
-                <p className="text-sm font-semibold text-[#17212B]">{v.model}</p>
-                <p className="text-xs text-[#697784]">
+                <p className="text-sm font-semibold text-[#0F1B2A]">{v.model}</p>
+                <p className="text-xs text-[#526071]">
                   Capacity: {v.capacityHead} head · {v.suitableFor}
                 </p>
-                <p className="text-xs text-[#697784] pt-2 border-t border-[#E5E9ED]">
+                <p className="text-xs text-[#526071] pt-2 border-t border-[#DFE6EE]">
                   Driver: <strong className="text-[#10243A]">{v.driverName}</strong> ({v.driverPhone})
                 </p>
               </div>

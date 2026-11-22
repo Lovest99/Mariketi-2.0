@@ -11,7 +11,7 @@ import {
   Warehouse,
 } from 'lucide-react';
 import { useMariketi } from '../../context/MariketiContext';
-import { formatDateTime } from '../../lib/utils';
+import { formatDateTime, getCountryFlag } from '../../lib/utils';
 import type { CollectionCentreRecord, LivestockCategory } from '../../types/mariketi';
 import { WorkspaceShell, type NavItem } from '../../components/layout/WorkspaceShell';
 import {
@@ -99,6 +99,7 @@ export const CollectionCentreWorkspace: React.FC = () => {
     e.preventDefault();
     createCentreRecord({
       centreName: currentUser?.organization || 'Gweru Central Livestock Collection Hub',
+      country: currentUser?.country || 'Zimbabwe',
       transactionRef: intakeForm.transactionRef,
       listingTitle: intakeForm.listingTitle,
       category: intakeForm.category,
@@ -132,11 +133,11 @@ export const CollectionCentreWorkspace: React.FC = () => {
       {tab === 'overview' && (
         <div className="space-y-5">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#10243A]">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#10243A] tracking-tight">
               {currentUser?.organization || 'Gweru Central Livestock Collection Hub'}
             </h1>
-            <p className="text-sm text-[#697784] mt-0.5">
-              Facility {currentUser?.meta?.facilityCode || 'MCC-GWERU-01'} · Traceable intake, pen holding, weighbridge checks, and PIN-verified release.
+            <p className="text-sm text-[#526071] mt-0.5">
+              {getCountryFlag(currentUser?.country)} {currentUser?.country || 'Zimbabwe'} · Facility {currentUser?.meta?.facilityCode || 'MCC-GWERU-01'} · Traceable intake, pen holding, weighbridge checks, and PIN-verified release.
             </p>
           </div>
 
@@ -147,13 +148,13 @@ export const CollectionCentreWorkspace: React.FC = () => {
             <MetricCell label="Pen Utilization" value={`${occupancyPct}%`} detail={`${totalHeadOnSite} / ${totalCapacity} head`} />
           </div>
 
-          <div className="bg-white border border-[#E5E9ED] rounded-lg overflow-hidden">
-            <div className="px-4 py-3.5 border-b border-[#E5E9ED]">
+          <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] overflow-hidden">
+            <div className="px-4 py-3.5 border-b border-[#DFE6EE]">
               <h2 className="text-sm font-bold text-[#10243A]">Active Collection & Movement Register</h2>
             </div>
 
             {/* Mobile stacked cards */}
-            <div className="md:hidden divide-y divide-[#E5E9ED]">
+            <div className="md:hidden divide-y divide-[#DFE6EE]">
               {centreRecords.map((rec) => (
                 <div key={rec.id} className="p-4 space-y-2.5">
                   <div className="flex items-center justify-between gap-2 text-xs">
@@ -173,14 +174,14 @@ export const CollectionCentreWorkspace: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-[#10243A]">
-                      {rec.listingTitle} ({rec.quantity} head)
+                      {getCountryFlag(rec.country)} {rec.listingTitle} ({rec.quantity} head)
                     </p>
-                    <p className="text-xs text-[#697784] mt-0.5">
-                      {rec.sellerName} → {rec.buyerName} · {rec.checkedWeightAvgKg} kg avg
+                    <p className="text-xs text-[#526071] mt-0.5">
+                      {rec.centreName} · {rec.sellerName} → {rec.buyerName} · {rec.checkedWeightAvgKg} kg avg
                     </p>
                   </div>
                   <div className="flex items-center justify-between pt-1">
-                    <span className="font-mono text-[11px] text-[#697784]">{rec.transactionRef}</span>
+                    <span className="font-mono text-[11px] text-[#526071]">{rec.transactionRef}</span>
                     <div>
                       {rec.status === 'Expected' && (
                         <Button
@@ -212,7 +213,7 @@ export const CollectionCentreWorkspace: React.FC = () => {
                         </Button>
                       )}
                       {rec.status === 'Released' && (
-                        <span className="text-xs text-[#21865B] font-semibold">Completed</span>
+                        <span className="text-xs text-[#1A7A50] font-semibold">Completed</span>
                       )}
                     </div>
                   </div>
@@ -223,7 +224,7 @@ export const CollectionCentreWorkspace: React.FC = () => {
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#FAFAF7] border-b border-[#E5E9ED] text-[#697784]">
+                <thead className="bg-[#F7F9FC] border-b border-[#DFE6EE] text-[#526071]">
                   <tr>
                     <th className="py-3 px-4 font-semibold">Ref / Txn</th>
                     <th className="py-3 px-4 font-semibold">Consignment</th>
@@ -233,23 +234,23 @@ export const CollectionCentreWorkspace: React.FC = () => {
                     <th className="py-3 px-4 font-semibold text-right">Next Step</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E5E9ED] tabular-nums">
+                <tbody className="divide-y divide-[#DFE6EE] tabular-nums">
                   {centreRecords.map((rec) => (
-                    <tr key={rec.id} className="hover:bg-[#FAFAF7]">
+                    <tr key={rec.id} className="hover:bg-[#F7F9FC]/80 transition-colors">
                       <td className="py-3 px-4 font-mono">
                         <span className="font-semibold text-[#10243A]">{rec.reference}</span>
-                        <span className="block text-[11px] text-[#697784]">{rec.transactionRef}</span>
+                        <span className="block text-[11px] text-[#526071]">{rec.transactionRef}</span>
                       </td>
                       <td className="py-3 px-4">
                         <p className="font-semibold text-[#10243A]">
-                          {rec.listingTitle} ({rec.quantity} head)
+                          {getCountryFlag(rec.country)} {rec.listingTitle} ({rec.quantity} head)
                         </p>
-                        <p className="text-[#697784]">
-                          {rec.sellerName} → {rec.buyerName}
+                        <p className="text-[#526071]">
+                          {rec.centreName} · {rec.sellerName} → {rec.buyerName}
                         </p>
                       </td>
                       <td className="py-3 px-4 font-mono text-[#10243A]">{rec.penNumber}</td>
-                      <td className="py-3 px-4 font-mono text-right">{rec.checkedWeightAvgKg} kg</td>
+                      <td className="py-3 px-4 font-mono text-right text-[#0F1B2A]">{rec.checkedWeightAvgKg} kg</td>
                       <td className="py-3 px-4">
                         <StatusLabel
                           tone={
@@ -299,7 +300,7 @@ export const CollectionCentreWorkspace: React.FC = () => {
                           </Button>
                         )}
                         {rec.status === 'Released' && (
-                          <span className="text-[#21865B] font-semibold">Completed</span>
+                          <span className="text-[#1A7A50] font-semibold">Completed</span>
                         )}
                       </td>
                     </tr>
@@ -316,7 +317,7 @@ export const CollectionCentreWorkspace: React.FC = () => {
           tab === 'incoming' ? expected : tab === 'onsite' ? onSite : released;
         return (
           <div className="space-y-4">
-            <h1 className="text-xl font-bold text-[#10243A]">
+            <h1 className="text-xl font-bold text-[#10243A] tracking-tight">
               {tab === 'incoming'
                 ? 'Expected Incoming Livestock'
                 : tab === 'onsite'
@@ -339,10 +340,10 @@ export const CollectionCentreWorkspace: React.FC = () => {
                 {filteredRecords.map((rec) => (
                   <div
                     key={rec.id}
-                    className="bg-white border border-[#E5E9ED] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5"
+                    className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5"
                   >
                     <div className="space-y-1 min-w-0 flex-1">
-                      <div className="text-xs font-mono text-[#697784] flex flex-wrap gap-x-1.5 gap-y-0.5">
+                      <div className="text-xs font-mono text-[#526071] flex flex-wrap gap-x-1.5 gap-y-0.5">
                         <span>{rec.reference}</span>
                         <span aria-hidden="true">·</span>
                         <span>{rec.transactionRef}</span>
@@ -354,17 +355,17 @@ export const CollectionCentreWorkspace: React.FC = () => {
                         </span>
                       </div>
                       <h2 className="text-[15px] font-bold text-[#10243A] leading-snug">
-                        {rec.listingTitle} ({rec.quantity} head)
+                        {getCountryFlag(rec.country)} {rec.listingTitle} ({rec.quantity} head)
                       </h2>
-                      <p className="text-xs text-[#697784] leading-relaxed">
-                        From {rec.sellerName} to {rec.buyerName} · {rec.notes}
+                      <p className="text-xs text-[#526071] leading-relaxed">
+                        {rec.centreName} · From {rec.sellerName} to {rec.buyerName} · {rec.notes}
                       </p>
-                      <p className="text-[11px] font-mono text-[#697784]">
+                      <p className="text-[11px] font-mono text-[#526071]">
                         Expected: {formatDateTime(rec.expectedAt)}
                         {rec.releasedAt ? ` · Released: ${formatDateTime(rec.releasedAt)}` : ''}
                       </p>
                     </div>
-                    <div className="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E5E9ED]">
+                    <div className="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#DFE6EE]">
                       {rec.status === 'Expected' && (
                         <Button
                           variant="primary"
@@ -393,7 +394,7 @@ export const CollectionCentreWorkspace: React.FC = () => {
                         </Button>
                       )}
                       {rec.status === 'Released' && (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#21865B]">
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#1A7A50]">
                           <History className="w-3.5 h-3.5" />
                           Released
                         </span>
@@ -409,7 +410,7 @@ export const CollectionCentreWorkspace: React.FC = () => {
 
       {tab === 'capacity' && (
         <div className="space-y-4">
-          <h1 className="text-xl font-bold text-[#10243A]">Facility Pen Capacity & Biosecurity</h1>
+          <h1 className="text-xl font-bold text-[#10243A] tracking-tight">Facility Pen Capacity & Biosecurity</h1>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               ['Cattle Kraals (Block A)', 18, 180, 'Weighbridge & dipping race active'],
@@ -418,17 +419,17 @@ export const CollectionCentreWorkspace: React.FC = () => {
             ].map(([name, used, cap, note]) => {
               const pct = Math.round(((used as number) / (cap as number)) * 100);
               return (
-                <div key={name as string} className="bg-white border border-[#E5E9ED] rounded-lg p-4 space-y-2.5">
+                <div key={name as string} className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 space-y-2.5">
                   <div className="flex items-center justify-between gap-2 text-xs">
                     <span className="font-bold text-[#10243A]">{name as string}</span>
-                    <span className="font-mono text-[#697784] tabular-nums shrink-0">
+                    <span className="font-mono text-[#526071] tabular-nums shrink-0">
                       {used as number} / {cap as number} head
                     </span>
                   </div>
-                  <div className="h-2 bg-[#E5E9ED] rounded-full overflow-hidden">
-                    <div className="h-full bg-[#10243A]" style={{ width: `${pct}%` }} />
+                  <div className="h-2 bg-[#EEF3F8] rounded-full overflow-hidden">
+                    <div className="h-full bg-[#10243A] rounded-full transition-all" style={{ width: `${pct}%` }} />
                   </div>
-                  <p className="text-xs text-[#697784]">{note as string}</p>
+                  <p className="text-xs text-[#526071]">{note as string}</p>
                 </div>
               );
             })}
@@ -476,7 +477,7 @@ export const CollectionCentreWorkspace: React.FC = () => {
         subtitle={handoverModal ? `${handoverModal.listingTitle} (${handoverModal.quantity} head)` : ''}
       >
         <form onSubmit={handleReleaseHandover} className="space-y-4">
-          <p className="text-xs text-[#697784] leading-relaxed prose-justify">
+          <p className="text-xs text-[#526071] leading-relaxed prose-justify">
             Enter the authorized transaction handover code provided by the Buyer or Transport Partner. (For testing, PIN is{' '}
             <strong className="font-mono text-[#10243A]">{handoverModal?.handoverPin}</strong>.)
           </p>

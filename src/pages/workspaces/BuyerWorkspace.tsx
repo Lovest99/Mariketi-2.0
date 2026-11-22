@@ -11,9 +11,16 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import { useMariketi } from '../../context/MariketiContext';
-import { formatDate, formatUSD } from '../../lib/utils';
+import {
+  formatDate,
+  formatUSD,
+  getCountryFlag,
+  getDistrictsForProvince,
+  getProvincesForCountry,
+} from '../../lib/utils';
 import { WorkspaceShell, type NavItem } from '../../components/layout/WorkspaceShell';
 import { ListingCard } from '../../components/shared/ListingCard';
+import { CountrySelect } from '../../components/shared/CountrySelect';
 import { MessagingView } from '../../components/shared/MessagingView';
 import { NegotiationPanel } from '../../components/shared/NegotiationPanel';
 import { TransactionDetailModal } from '../../components/shared/TransactionDetailModal';
@@ -23,6 +30,7 @@ import {
   EmptyState,
   Input,
   MetricCell,
+  Select,
   StatusLabel,
 } from '../../components/ui/DesignSystem';
 
@@ -48,7 +56,9 @@ export const BuyerWorkspace: React.FC = () => {
     name: currentUser?.name || '',
     org: currentUser?.organization || '',
     phone: currentUser?.phone || '',
-    district: currentUser?.district || '',
+    country: currentUser?.country || 'Zimbabwe',
+    province: currentUser?.province || 'Harare',
+    district: currentUser?.district || 'Harare',
   });
 
   useEffect(() => {
@@ -56,9 +66,19 @@ export const BuyerWorkspace: React.FC = () => {
       name: currentUser?.name || '',
       org: currentUser?.organization || '',
       phone: currentUser?.phone || '',
-      district: currentUser?.district || '',
+      country: currentUser?.country || 'Zimbabwe',
+      province: currentUser?.province || 'Harare',
+      district: currentUser?.district || 'Harare',
     });
-  }, [currentUser?.id, currentUser?.name, currentUser?.organization, currentUser?.phone, currentUser?.district]);
+  }, [
+    currentUser?.id,
+    currentUser?.name,
+    currentUser?.organization,
+    currentUser?.phone,
+    currentUser?.country,
+    currentUser?.province,
+    currentUser?.district,
+  ]);
 
   const activeOffers = offers.filter((o) => o.status === 'pending' || o.status === 'countered');
   const activeOrders = transactions.filter((t) => t.state !== 'Completed' && t.state !== 'Cancelled');
@@ -96,11 +116,11 @@ export const BuyerWorkspace: React.FC = () => {
       {tab === 'overview' && (
         <div className="space-y-5">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#10243A]">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#10243A] tracking-tight">
               Welcome back, {currentUser?.name}
             </h1>
-            <p className="text-sm text-[#697784] mt-0.5">
-              {currentUser?.organization} · Procurement overview across verified Zimbabwean farms.
+            <p className="text-sm text-[#526071] mt-0.5">
+              {getCountryFlag(currentUser?.country)} {currentUser?.organization} · Procurement overview across verified African farms (Southern, East & Continental corridors).
             </p>
           </div>
 
@@ -122,8 +142,8 @@ export const BuyerWorkspace: React.FC = () => {
           </div>
 
           {/* Active Transactions Responsive Register */}
-          <div className="bg-white border border-[#E5E9ED] rounded-lg overflow-hidden">
-            <div className="px-4 py-3.5 border-b border-[#E5E9ED] flex items-center justify-between gap-2">
+          <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] overflow-hidden">
+            <div className="px-4 py-3.5 border-b border-[#DFE6EE] flex items-center justify-between gap-2">
               <h2 className="text-sm font-bold text-[#10243A]">Active Orders & Handovers</h2>
               <Button variant="ghost" size="sm" onClick={() => setTab('transactions')}>
                 View all
@@ -131,7 +151,7 @@ export const BuyerWorkspace: React.FC = () => {
             </div>
 
             {/* Mobile stacked cards */}
-            <div className="md:hidden divide-y divide-[#E5E9ED]">
+            <div className="md:hidden divide-y divide-[#DFE6EE]">
               {transactions.map((txn) => (
                 <div key={txn.id} className="p-4 space-y-2.5">
                   <div className="flex items-center justify-between gap-2 text-xs">
@@ -148,10 +168,10 @@ export const BuyerWorkspace: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-[#17212B]">
+                    <p className="text-sm font-semibold text-[#0F1B2A]">
                       {txn.listingTitle} ({txn.quantity} head)
                     </p>
-                    <p className="text-xs text-[#697784] mt-0.5">Seller: {txn.sellerName}</p>
+                    <p className="text-xs text-[#526071] mt-0.5">Seller: {txn.sellerName}</p>
                   </div>
                   <div className="flex items-center justify-between pt-1">
                     <span className="font-mono text-sm font-bold text-[#10243A] tabular-nums">
@@ -169,7 +189,7 @@ export const BuyerWorkspace: React.FC = () => {
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#FAFAF7] border-b border-[#E5E9ED] text-[#697784]">
+                <thead className="bg-[#F7F9FC] border-b border-[#DFE6EE] text-[#526071]">
                   <tr>
                     <th className="py-3 px-4 font-semibold">Reference</th>
                     <th className="py-3 px-4 font-semibold">Livestock Lot</th>
@@ -179,16 +199,16 @@ export const BuyerWorkspace: React.FC = () => {
                     <th className="py-3 px-4 font-semibold text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E5E9ED]">
+                <tbody className="divide-y divide-[#DFE6EE]">
                   {transactions.map((txn) => (
-                    <tr key={txn.id} className="hover:bg-[#FAFAF7]">
+                    <tr key={txn.id} className="hover:bg-[#F7F9FC]/80 transition-colors">
                       <td className="py-3 px-4 font-mono font-semibold text-[#10243A]">
                         {txn.reference}
                       </td>
-                      <td className="py-3 px-4 text-[#17212B] font-medium">
+                      <td className="py-3 px-4 text-[#0F1B2A] font-medium">
                         {txn.listingTitle} ({txn.quantity} head)
                       </td>
-                      <td className="py-3 px-4 text-[#697784]">{txn.sellerName}</td>
+                      <td className="py-3 px-4 text-[#526071]">{txn.sellerName}</td>
                       <td className="py-3 px-4 font-mono font-semibold text-right text-[#10243A] tabular-nums">
                         {formatUSD(txn.agreedAmountUsd)}
                       </td>
@@ -208,10 +228,10 @@ export const BuyerWorkspace: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setSelectedTxnId(txn.id)}
-                          className="text-xs font-semibold text-[#10243A] hover:text-[#C96A0F] inline-flex items-center gap-1"
+                          className="group text-xs font-semibold text-[#10243A] hover:text-[#C96A0F] inline-flex items-center gap-1 transition-colors rounded focus-visible:outline-2 focus-visible:outline-[#F28C28]"
                         >
                           Manage
-                          <ArrowUpRight className="w-3.5 h-3.5" />
+                          <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                         </button>
                       </td>
                     </tr>
@@ -264,8 +284,8 @@ export const BuyerWorkspace: React.FC = () => {
       {tab === 'offers' && (
         <div className="space-y-4">
           <div>
-            <h1 className="text-xl font-bold text-[#10243A]">Offers & Negotiations</h1>
-            <p className="text-xs text-[#697784] mt-0.5">
+            <h1 className="text-xl font-bold text-[#10243A] tracking-tight">Offers & Negotiations</h1>
+            <p className="text-xs text-[#526071] mt-0.5">
               Counter-offer, accept seller terms, or convert accepted offers into traceable transactions.
             </p>
           </div>
@@ -279,8 +299,8 @@ export const BuyerWorkspace: React.FC = () => {
       {tab === 'transactions' && (
         <div className="space-y-4">
           <div>
-            <h1 className="text-xl font-bold text-[#10243A]">Orders & Transactions</h1>
-            <p className="text-xs text-[#697784] mt-0.5">
+            <h1 className="text-xl font-bold text-[#10243A] tracking-tight">Orders & Transactions</h1>
+            <p className="text-xs text-[#526071] mt-0.5">
               Click any transaction to manage simulated settlement confirmation, collection check-in, delivery tracking, handover PIN, or disputes.
             </p>
           </div>
@@ -288,10 +308,10 @@ export const BuyerWorkspace: React.FC = () => {
             {transactions.map((txn) => (
               <div
                 key={txn.id}
-                className="bg-white border border-[#E5E9ED] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5"
+                className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 transition-colors hover:border-[#C5D1DE]"
               >
                 <div className="space-y-1 min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#697784]">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#526071]">
                     <span className="font-mono font-bold text-[#10243A]">{txn.reference}</span>
                     <span aria-hidden="true">·</span>
                     <span>Seller: {txn.sellerName}</span>
@@ -301,11 +321,11 @@ export const BuyerWorkspace: React.FC = () => {
                   <h3 className="text-[15px] font-bold text-[#10243A] leading-snug">
                     {txn.listingTitle} ({txn.quantity} head)
                   </h3>
-                  <p className="text-xs text-[#697784]">
+                  <p className="text-xs text-[#526071]">
                     {txn.pickupLocation} → {txn.deliveryLocation}
                   </p>
                 </div>
-                <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-[#E5E9ED] shrink-0">
+                <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-[#DFE6EE] shrink-0">
                   <div className="text-left sm:text-right">
                     <p className="text-base sm:text-lg font-bold font-mono text-[#10243A] tabular-nums">
                       {formatUSD(txn.agreedAmountUsd)}
@@ -329,19 +349,19 @@ export const BuyerWorkspace: React.FC = () => {
 
       {tab === 'reviews' && (
         <div className="space-y-4">
-          <h1 className="text-xl font-bold text-[#10243A]">Published Seller Reviews</h1>
+          <h1 className="text-xl font-bold text-[#10243A] tracking-tight">Published Seller Reviews</h1>
           <div className="space-y-3">
             {reviews.map((rev) => (
-              <div key={rev.id} className="bg-white border border-[#E5E9ED] rounded-lg p-4">
+              <div key={rev.id} className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs">
                   <span className="font-bold text-[#10243A]">
-                    {rev.sellerName} · <span className="font-mono text-[#697784]">{rev.transactionRef}</span>
+                    {rev.sellerName} · <span className="font-mono text-[#526071]">{rev.transactionRef}</span>
                   </span>
                   <span className="font-mono font-bold text-[#10243A]">
                     {rev.rating.toFixed(1)} / 5.0 · {formatDate(rev.createdAt)}
                   </span>
                 </div>
-                <p className="text-sm text-[#697784] mt-2 leading-relaxed prose-justify">{rev.comment}</p>
+                <p className="text-sm text-[#526071] mt-2 leading-relaxed prose-justify">{rev.comment}</p>
               </div>
             ))}
           </div>
@@ -356,10 +376,12 @@ export const BuyerWorkspace: React.FC = () => {
               name: settingsForm.name.trim(),
               organization: settingsForm.org.trim(),
               phone: settingsForm.phone.trim(),
+              country: settingsForm.country,
+              province: settingsForm.province,
               district: settingsForm.district.trim(),
             });
           }}
-          className="bg-white border border-[#E5E9ED] rounded-lg p-5 max-w-xl space-y-4"
+          className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-5 max-w-xl space-y-4"
         >
           <h1 className="text-lg font-bold text-[#10243A]">Buyer Profile & Procurement Settings</h1>
           <Input
@@ -372,18 +394,55 @@ export const BuyerWorkspace: React.FC = () => {
             value={settingsForm.org}
             onChange={(e) => setSettingsForm({ ...settingsForm, org: e.target.value })}
           />
+          <CountrySelect
+            label="Country (All 54 African Nations)"
+            value={settingsForm.country}
+            showDialCode
+            onChange={(nextCountry) => {
+              const nextProvinces = getProvincesForCountry(nextCountry);
+              const firstProv = nextProvinces[0] || '';
+              const firstDist = firstProv ? getDistrictsForProvince(nextCountry, firstProv)[0] || '' : '';
+              setSettingsForm({
+                ...settingsForm,
+                country: nextCountry,
+                province: firstProv,
+                district: firstDist,
+              });
+            }}
+          />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <Input
-              label="Phone"
-              value={settingsForm.phone}
-              onChange={(e) => setSettingsForm({ ...settingsForm, phone: e.target.value })}
-            />
-            <Input
-              label="Primary District"
+            <Select
+              label="Province / County"
+              value={settingsForm.province}
+              onChange={(e) => {
+                const nextProv = e.target.value;
+                const nextDist = getDistrictsForProvince(settingsForm.country, nextProv)[0] || '';
+                setSettingsForm({ ...settingsForm, province: nextProv, district: nextDist });
+              }}
+            >
+              {getProvincesForCountry(settingsForm.country).map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </Select>
+            <Select
+              label="District / Town"
               value={settingsForm.district}
               onChange={(e) => setSettingsForm({ ...settingsForm, district: e.target.value })}
-            />
+            >
+              {getDistrictsForProvince(settingsForm.country, settingsForm.province).map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </Select>
           </div>
+          <Input
+            label="Phone"
+            value={settingsForm.phone}
+            onChange={(e) => setSettingsForm({ ...settingsForm, phone: e.target.value })}
+          />
           <Button type="submit" variant="primary">
             Save Changes
           </Button>

@@ -44,6 +44,20 @@ export function generateRef(prefix: string): string {
   return `${prefix}-2026-${num}`;
 }
 
+export {
+  AFRICAN_COUNTRIES,
+  AFRICAN_REGIONS,
+  AFRICAN_REGION_SUMMARY,
+  COUNTRIES_BY_REGION,
+  formatLocationWithFlag,
+  getCountry,
+  getCountryFlag,
+  getCountryRegion,
+  getDistrictsForProvince,
+  getProvincesForCountry,
+  type AfricanCountry,
+} from './africanCountries';
+
 export const ZIMBABWE_PROVINCES: Record<string, string[]> = {
   'Matabeleland South': ['Gwanda', 'Beitbridge', 'Umzingwane', 'Matobo', 'Insiza', 'Plumtree'],
   'Matabeleland North': ['Lupane', 'Bubi', 'Umguza', 'Hwange', 'Nkayi'],

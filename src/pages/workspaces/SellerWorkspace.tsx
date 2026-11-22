@@ -23,9 +23,19 @@ import {
   Upload,
 } from 'lucide-react';
 import { useMariketi } from '../../context/MariketiContext';
-import { ASSET_IMAGES, cn, formatDate, formatUSD, ZIMBABWE_PROVINCES } from '../../lib/utils';
+import {
+  ASSET_IMAGES,
+  cn,
+  formatDate,
+  formatUSD,
+  getCountry,
+  getCountryFlag,
+  getDistrictsForProvince,
+  getProvincesForCountry,
+} from '../../lib/utils';
 import type { GenderType, LivestockCategory, LivestockListing } from '../../types/mariketi';
 import { WorkspaceShell, type NavItem } from '../../components/layout/WorkspaceShell';
+import { CountrySelect } from '../../components/shared/CountrySelect';
 import { MessagingView } from '../../components/shared/MessagingView';
 import { NegotiationPanel } from '../../components/shared/NegotiationPanel';
 import { TransactionDetailModal } from '../../components/shared/TransactionDetailModal';
@@ -99,6 +109,9 @@ export const SellerWorkspace: React.FC = () => {
   const [sellerSettings, setSellerSettings] = useState({
     organization: currentUser?.organization || '',
     phone: currentUser?.phone || '',
+    country: currentUser?.country || 'Zimbabwe',
+    province: currentUser?.province || 'Matabeleland South',
+    district: currentUser?.district || 'Gwanda',
     vetReg: currentUser?.meta?.vetReg || 'DVS-MS-2041',
   });
 
@@ -106,16 +119,38 @@ export const SellerWorkspace: React.FC = () => {
     setSellerSettings({
       organization: currentUser?.organization || '',
       phone: currentUser?.phone || '',
+      country: currentUser?.country || 'Zimbabwe',
+      province: currentUser?.province || 'Matabeleland South',
+      district: currentUser?.district || 'Gwanda',
       vetReg: currentUser?.meta?.vetReg || 'DVS-MS-2041',
     });
-  }, [currentUser?.id, currentUser?.organization, currentUser?.phone, currentUser?.meta?.vetReg]);
+  }, [
+    currentUser?.id,
+    currentUser?.organization,
+    currentUser?.phone,
+    currentUser?.country,
+    currentUser?.province,
+    currentUser?.district,
+    currentUser?.meta?.vetReg,
+  ]);
 
   // 7-step Listing Creation Wizard state (persisted draft)
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState(() => {
+    const defaultCountry = currentUser?.country || 'Zimbabwe';
+    const defaultProvinces = getProvincesForCountry(defaultCountry);
+    const defaultProv = currentUser?.province || defaultProvinces[0] || 'Matabeleland South';
+    const defaultDist =
+      currentUser?.district || getDistrictsForProvince(defaultCountry, defaultProv)[0] || 'Gwanda';
     try {
       const saved = localStorage.getItem('mariketi_seller_listing_draft');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...parsed,
+          country: parsed.country || defaultCountry,
+        };
+      }
     } catch {
       // ignore
     }
@@ -132,11 +167,12 @@ export const SellerWorkspace: React.FC = () => {
       priceUsd: '820',
       priceUnit: 'per head' as 'per head' | 'total lot',
       quantity: '10',
-      province: currentUser?.province || 'Matabeleland South',
-      district: currentUser?.district || 'Gwanda',
+      country: defaultCountry,
+      province: defaultProv,
+      district: defaultDist,
       farmName: currentUser?.organization || 'Umzingwane Valley Stud & Ranch',
       photoPreview: ASSET_IMAGES.brahmanBull as string,
-      vetDocName: 'DVS-Clearance-Ready.pdf',
+      vetDocName: 'Vet-Clearance-Ready.pdf',
       requestFieldVerification: true,
     };
   });
@@ -244,6 +280,7 @@ export const SellerWorkspace: React.FC = () => {
       quantity: Number(draft.quantity) || 1,
       priceUsd: Number(draft.priceUsd) || 100,
       priceUnit: draft.priceUnit,
+      country: draft.country || currentUser?.country || 'Zimbabwe',
       province: draft.province,
       district: draft.district,
       farmName: draft.farmName.trim(),
@@ -254,7 +291,7 @@ export const SellerWorkspace: React.FC = () => {
       images: [draft.photoPreview || CATEGORY_DEFAULT_PHOTO[draft.category as LivestockCategory]],
       description:
         draft.description.trim() ||
-        `Healthy ${draft.breed} lot raised at ${draft.farmName} in ${draft.district}, ${draft.province}.`,
+        `Healthy ${draft.breed} lot raised at ${draft.farmName} in ${draft.district}, ${draft.province}, ${draft.country || 'Zimbabwe'}.`,
       vaccinationSummary: draft.vaccinationSummary,
       feedingRegime: draft.feedingRegime,
       featured: false,
@@ -299,10 +336,10 @@ export const SellerWorkspace: React.FC = () => {
       {tab === 'overview' && (
         <div className="space-y-5">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#10243A]">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#10243A] tracking-tight">
               {currentUser?.organization || 'Farm Operations Overview'}
             </h1>
-            <p className="text-sm text-[#697784] mt-0.5">
+            <p className="text-sm text-[#526071] mt-0.5">
               Manage active herds, field inspections, incoming commercial offers, and handovers.
             </p>
           </div>
@@ -321,38 +358,38 @@ export const SellerWorkspace: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            <div className="lg:col-span-7 min-w-0 bg-white border border-[#E5E9ED] rounded-lg p-4 sm:p-5">
+            <div className="lg:col-span-7 min-w-0 bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 sm:p-5">
               <div className="flex items-center justify-between gap-2 mb-3.5">
                 <div className="min-w-0">
                   <h2 className="text-sm font-bold text-[#10243A]">Monthly Sales Volume (USD)</h2>
-                  <p className="text-xs text-[#697784]">6-month commercial livestock turnover</p>
+                  <p className="text-xs text-[#526071]">6-month commercial livestock turnover</p>
                 </div>
-                <span className="font-mono text-xs text-[#697784] shrink-0">USD</span>
+                <span className="font-mono text-xs text-[#526071] shrink-0">USD</span>
               </div>
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={REVENUE_DATA}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E9ED" vertical={false} />
-                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#697784' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 12, fill: '#697784' }} axisLine={false} tickLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#DFE6EE" vertical={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#526071' }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 12, fill: '#526071' }} axisLine={false} tickLine={false} />
                     <Tooltip
                       formatter={(v) => [formatUSD(Number(v || 0)), 'Volume']}
-                      contentStyle={{ borderRadius: 6, borderColor: '#E5E9ED', fontSize: 12 }}
+                      contentStyle={{ borderRadius: 8, borderColor: '#DFE6EE', fontSize: 12 }}
                     />
-                    <Bar dataKey="revenue" fill="#10243A" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="revenue" fill="#10243A" radius={[5, 5, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            <div className="lg:col-span-5 min-w-0 bg-white border border-[#E5E9ED] rounded-lg p-4 sm:p-5 space-y-3.5">
+            <div className="lg:col-span-5 min-w-0 bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 sm:p-5 space-y-3.5">
               <h2 className="text-sm font-bold text-[#10243A]">Recent Seller Activity</h2>
-              <div className="divide-y divide-[#E5E9ED] text-xs">
+              <div className="divide-y divide-[#DFE6EE] text-xs">
                 {offers.slice(0, 4).map((o) => (
                   <div key={o.id} className="py-3 flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-semibold text-[#10243A] truncate">{o.listingTitle}</p>
-                      <p className="text-[#697784] mt-0.5">
+                      <p className="text-[#526071] mt-0.5">
                         {o.buyerName} · {o.status}
                       </p>
                     </div>
@@ -379,9 +416,9 @@ export const SellerWorkspace: React.FC = () => {
               Create Listing
             </Button>
           </div>
-          <div className="bg-white border border-[#E5E9ED] rounded-lg overflow-hidden">
+          <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] overflow-hidden">
             {/* Mobile stacked cards */}
-            <div className="md:hidden divide-y divide-[#E5E9ED]">
+            <div className="md:hidden divide-y divide-[#DFE6EE]">
               {myListings.map((l) => (
                 <div key={l.id} className="p-4 space-y-2.5">
                   <div className="flex items-center justify-between gap-2 text-xs">
@@ -393,13 +430,13 @@ export const SellerWorkspace: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-[#10243A]">{l.title}</p>
-                    <p className="text-xs text-[#697784] mt-0.5">
-                      {l.quantity} head · {l.weightKg} kg · {l.district} · <span className="capitalize font-medium text-[#10243A]">{l.status}</span>
+                    <p className="text-xs text-[#526071] mt-0.5">
+                      {l.quantity} head · {l.weightKg} kg · {getCountryFlag(l.country)} {l.district}, {l.country} · <span className="capitalize font-medium text-[#10243A]">{l.status}</span>
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                     <span className="font-mono text-sm font-bold text-[#10243A] tabular-nums">
-                      {formatUSD(l.priceUsd)} <span className="text-[11px] font-sans font-normal text-[#697784]">{l.priceUnit}</span>
+                      {formatUSD(l.priceUsd)} <span className="text-[11px] font-sans font-normal text-[#526071]">{l.priceUnit}</span>
                     </span>
                     <div className="flex items-center gap-2">
                       <Button variant="secondary" size="sm" onClick={() => openEditListing(l)}>
@@ -424,7 +461,7 @@ export const SellerWorkspace: React.FC = () => {
             {/* Desktop table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#FAFAF7] border-b border-[#E5E9ED] text-[#697784]">
+                <thead className="bg-[#F7F9FC] border-b border-[#DFE6EE] text-[#526071]">
                   <tr>
                     <th className="py-3 px-4 font-semibold">Ref / Lot</th>
                     <th className="py-3 px-4 font-semibold">Specs</th>
@@ -434,15 +471,15 @@ export const SellerWorkspace: React.FC = () => {
                     <th className="py-3 px-4 font-semibold text-right">Manage</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E5E9ED] tabular-nums">
+                <tbody className="divide-y divide-[#DFE6EE] tabular-nums">
                   {myListings.map((l) => (
-                    <tr key={l.id} className="hover:bg-[#FAFAF7]">
+                    <tr key={l.id} className="hover:bg-[#F7F9FC]/80 transition-colors">
                       <td className="py-3 px-4">
                         <p className="font-mono font-semibold text-[#10243A]">{l.reference}</p>
-                        <p className="text-[#17212B] font-medium mt-0.5">{l.title}</p>
+                        <p className="text-[#0F1B2A] font-medium mt-0.5">{l.title}</p>
                       </td>
-                      <td className="py-3 px-4 text-[#697784]">
-                        {l.quantity} head · {l.weightKg} kg · {l.district}
+                      <td className="py-3 px-4 text-[#526071]">
+                        {l.quantity} head · {l.weightKg} kg · {getCountryFlag(l.country)} {l.district}, {l.country}
                       </td>
                       <td className="py-3 px-4 font-mono font-semibold text-right text-[#10243A]">
                         {formatUSD(l.priceUsd)}
@@ -458,7 +495,7 @@ export const SellerWorkspace: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => openEditListing(l)}
-                          className="text-xs font-semibold text-[#10243A] hover:text-[#C96A0F] inline-flex items-center gap-1"
+                          className="text-xs font-semibold text-[#10243A] hover:text-[#C96A0F] inline-flex items-center gap-1 transition-colors rounded focus-visible:outline-2 focus-visible:outline-[#F28C28]"
                         >
                           <Pencil className="w-3 h-3" />
                           Edit
@@ -467,7 +504,7 @@ export const SellerWorkspace: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => updateListingStatus(l.id, 'paused')}
-                            className="text-xs font-medium text-[#697784] hover:text-[#10243A]"
+                            className="text-xs font-medium text-[#526071] hover:text-[#10243A] underline-offset-4 hover:underline transition-colors rounded focus-visible:outline-2 focus-visible:outline-[#F28C28]"
                           >
                             Pause
                           </button>
@@ -475,7 +512,7 @@ export const SellerWorkspace: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => updateListingStatus(l.id, 'active')}
-                            className="text-xs font-semibold text-[#21865B]"
+                            className="text-xs font-semibold text-[#1A7A50] hover:underline underline-offset-4 transition-colors rounded focus-visible:outline-2 focus-visible:outline-[#F28C28]"
                           >
                             Activate
                           </button>
@@ -484,7 +521,7 @@ export const SellerWorkspace: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => updateListingStatus(l.id, 'archived')}
-                            className="text-xs font-medium text-[#D64B4B]"
+                            className="text-xs font-semibold text-[#C53939] hover:underline underline-offset-4 transition-colors rounded focus-visible:outline-2 focus-visible:outline-[#F28C28]"
                           >
                             Archive
                           </button>
@@ -503,8 +540,8 @@ export const SellerWorkspace: React.FC = () => {
         <div className="max-w-3xl space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl font-bold text-[#10243A]">Create Livestock Listing</h1>
-              <p className="text-xs text-[#697784] mt-0.5">
+              <h1 className="text-xl font-bold text-[#10243A] tracking-tight">Create Livestock Listing</h1>
+              <p className="text-xs text-[#526071] mt-0.5">
                 Guided 7-step publication with field verification request and local draft saving.
               </p>
             </div>
@@ -514,12 +551,12 @@ export const SellerWorkspace: React.FC = () => {
           </div>
 
           {publishedRef ? (
-            <div className="bg-white border border-[#E5E9ED] rounded-lg p-6 sm:p-7 text-center space-y-3.5">
-              <CheckCircle2 className="w-10 h-10 text-[#21865B] mx-auto" />
+            <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-6 sm:p-7 text-center space-y-3.5">
+              <CheckCircle2 className="w-10 h-10 text-[#1A7A50] mx-auto" />
               <h2 className="text-xl font-bold text-[#10243A]">
                 Listing Published — <span className="font-mono">{publishedRef}</span>
               </h2>
-              <p className="text-sm text-[#697784] max-w-md mx-auto leading-relaxed prose-justify">
+              <p className="text-sm text-[#526071] max-w-md mx-auto leading-relaxed prose-justify">
                 Your livestock lot is now discoverable on MARIKETI. If you requested field verification, an inspection task has been automatically dispatched to our regional field unit.
               </p>
               <div className="flex flex-wrap justify-center gap-2.5 pt-1">
@@ -538,20 +575,20 @@ export const SellerWorkspace: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-[#E5E9ED] rounded-lg p-4 sm:p-5 space-y-5">
+            <div className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 sm:p-5 space-y-5">
               {/* Step progress bar */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-[#10243A]">{WIZARD_STEPS[step - 1]}</span>
-                  <span className="font-mono text-[#697784]">Step {step} of 7</span>
+                  <span className="font-mono text-[#526071]">Step {step} of 7</span>
                 </div>
                 <div className="grid grid-cols-7 gap-1">
                   {WIZARD_STEPS.map((label, idx) => (
                     <div
                       key={label}
                       className={cn(
-                        'h-1.5 rounded-full',
-                        idx + 1 <= step ? 'bg-[#F28C28]' : 'bg-[#E5E9ED]'
+                        'h-1.5 rounded-full transition-colors',
+                        idx + 1 <= step ? 'bg-[#F28C28]' : 'bg-[#DFE6EE]'
                       )}
                     />
                   ))}
@@ -574,10 +611,10 @@ export const SellerWorkspace: React.FC = () => {
                           }))
                         }
                         className={cn(
-                          'p-4 rounded-md border text-left transition-colors',
+                          'p-4 rounded-xl border text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-[#F28C28]',
                           draft.category === cat
-                            ? 'border-[#10243A] bg-[#10243A] text-white'
-                            : 'border-[#E5E9ED] bg-white hover:bg-[#FAFAF7] text-[#10243A]'
+                            ? 'border-[#0F243B] bg-gradient-to-b from-[#152F4B] to-[#0F243B] text-white shadow-[0_4px_12px_rgba(16,36,58,0.2)]'
+                            : 'border-[#DFE6EE] bg-white hover:bg-[#F7F9FC] hover:border-[#B6C3D1] text-[#10243A]'
                         )}
                       >
                         <p className="text-sm font-bold">{cat}</p>
@@ -666,8 +703,8 @@ export const SellerWorkspace: React.FC = () => {
                       onChange={(e) => setDraft({ ...draft, quantity: e.target.value })}
                     />
                   </div>
-                  <div className="p-4 rounded bg-[#FAFAF7] border border-[#E5E9ED] flex items-center justify-between text-sm">
-                    <span className="text-[#697784]">Estimated Total Lot Value</span>
+                  <div className="p-4 rounded-lg bg-[#F7F9FC] border border-[#DFE6EE] flex items-center justify-between text-sm">
+                    <span className="text-[#526071]">Estimated Total Lot Value</span>
                     <span className="font-mono font-bold text-[#10243A] tabular-nums">
                       {formatUSD(
                         draft.priceUnit === 'per head'
@@ -686,31 +723,49 @@ export const SellerWorkspace: React.FC = () => {
                     value={draft.farmName}
                     onChange={(e) => setDraft({ ...draft, farmName: e.target.value })}
                   />
+                  <CountrySelect
+                    label="Country (All 54 African Nations)"
+                    value={draft.country || 'Zimbabwe'}
+                    onChange={(nextCountry) => {
+                      const nextProvs = getProvincesForCountry(nextCountry);
+                      const firstProv = nextProvs[0] || '';
+                      const firstDist = firstProv
+                        ? getDistrictsForProvince(nextCountry, firstProv)[0] || ''
+                        : '';
+                      setDraft({
+                        ...draft,
+                        country: nextCountry,
+                        province: firstProv,
+                        district: firstDist,
+                      });
+                    }}
+                  />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Select
-                      label="Province"
+                      label="Province / County"
                       value={draft.province}
                       onChange={(e) => {
                         const p = e.target.value;
+                        const c = draft.country || 'Zimbabwe';
                         setDraft({
                           ...draft,
                           province: p,
-                          district: ZIMBABWE_PROVINCES[p]?.[0] || '',
+                          district: getDistrictsForProvince(c, p)[0] || '',
                         });
                       }}
                     >
-                      {Object.keys(ZIMBABWE_PROVINCES).map((p) => (
+                      {getProvincesForCountry(draft.country || 'Zimbabwe').map((p) => (
                         <option key={p} value={p}>
                           {p}
                         </option>
                       ))}
                     </Select>
                     <Select
-                      label="District"
+                      label="District / Town"
                       value={draft.district}
                       onChange={(e) => setDraft({ ...draft, district: e.target.value })}
                     >
-                      {(ZIMBABWE_PROVINCES[draft.province] || []).map((d) => (
+                      {getDistrictsForProvince(draft.country || 'Zimbabwe', draft.province).map((d) => (
                         <option key={d} value={d}>
                           {d}
                         </option>
@@ -723,15 +778,15 @@ export const SellerWorkspace: React.FC = () => {
               {step === 5 && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
-                    <div className="aspect-[4/3] rounded-md overflow-hidden border border-[#E5E9ED]">
+                    <div className="aspect-[4/3] rounded-lg overflow-hidden border border-[#DFE6EE]">
                       <SafeImage src={draft.photoPreview} alt="Livestock preview" className="w-full h-full" />
                     </div>
                     <div className="space-y-3">
                       <label className="block text-xs font-semibold text-[#10243A]">
                         Upload Livestock Photograph
                       </label>
-                      <label className="h-10 px-4 rounded-md border border-[#E5E9ED] bg-white hover:bg-[#F4F6F7] inline-flex items-center gap-2 text-xs font-medium text-[#10243A] cursor-pointer">
-                        <Upload className="w-4 h-4" />
+                      <label className="h-10 px-4 rounded-lg border border-[#D4DDE6] bg-white hover:bg-[#F7F9FC] hover:border-[#B6C3D1] inline-flex items-center gap-2 text-xs font-semibold text-[#10243A] cursor-pointer transition-all duration-150 shadow-[0_1px_2px_rgba(16,36,58,0.04)]">
+                        <Upload className="w-4 h-4 text-[#F28C28]" />
                         Choose Photo from Device
                         <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
                       </label>
@@ -752,7 +807,7 @@ export const SellerWorkspace: React.FC = () => {
 
               {step === 6 && (
                 <div className="space-y-4">
-                  <label className="flex items-start gap-3 p-4 rounded-md border border-[#E5E9ED] bg-[#FAFAF7] cursor-pointer">
+                  <label className="flex items-start gap-3 p-4 rounded-lg border border-[#DFE6EE] bg-[#F7F9FC] hover:border-[#B6C3D1] cursor-pointer transition-colors">
                     <input
                       type="checkbox"
                       checked={draft.requestFieldVerification}
@@ -765,8 +820,8 @@ export const SellerWorkspace: React.FC = () => {
                       <p className="text-sm font-bold text-[#10243A]">
                         Request On-Site MARIKETI Field Verification (Recommended)
                       </p>
-                      <p className="text-xs text-[#697784] mt-1 leading-relaxed prose-justify">
-                        An accredited Field Agent in {draft.province} will be dispatched to confirm headcount, weights, ear tags, and veterinary papers. Verified listings receive significantly more commercial offers.
+                      <p className="text-xs text-[#526071] mt-1 leading-relaxed prose-justify">
+                        An accredited Field Agent in {getCountryFlag(draft.country)} {draft.province}, {draft.country || 'Zimbabwe'} will be dispatched to confirm headcount, weights, ear tags, and {getCountry(draft.country).vetAuthority} papers. Verified listings receive significantly more commercial offers.
                       </p>
                     </div>
                   </label>
@@ -776,22 +831,22 @@ export const SellerWorkspace: React.FC = () => {
               {step === 7 && (
                 <div className="space-y-4">
                   <p className="text-sm font-bold text-[#10243A]">Review Before Publishing</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 rounded-md bg-[#FAFAF7] border border-[#E5E9ED]">
-                    <div className="sm:col-span-4 aspect-[4/3] rounded overflow-hidden">
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 rounded-lg bg-[#F7F9FC] border border-[#DFE6EE]">
+                    <div className="sm:col-span-4 aspect-[4/3] rounded-lg overflow-hidden border border-[#DFE6EE]">
                       <SafeImage src={draft.photoPreview} alt={draft.title} className="w-full h-full" />
                     </div>
                     <div className="sm:col-span-8 space-y-2 text-xs">
                       <p className="text-base font-bold text-[#10243A]">{draft.title}</p>
-                      <p className="text-[#697784]">
+                      <p className="text-[#526071]">
                         {draft.category} · {draft.breed} · {draft.gender} · {draft.weightKg} kg avg
                       </p>
                       <p className="font-mono text-base font-bold text-[#10243A]">
                         {formatUSD(Number(draft.priceUsd))} {draft.priceUnit} × {draft.quantity} head
                       </p>
-                      <p className="text-[#697784]">
-                        Location: {draft.farmName}, {draft.district}, {draft.province}
+                      <p className="text-[#526071]">
+                        Location: {getCountryFlag(draft.country)} {draft.farmName}, {draft.district}, {draft.province}, {draft.country || 'Zimbabwe'}
                       </p>
-                      <p className="text-[#21865B] font-semibold">
+                      <p className="text-[#1A7A50] font-semibold">
                         {draft.requestFieldVerification
                           ? 'Field verification will be dispatched automatically'
                           : 'Publishing without field verification'}
@@ -801,9 +856,9 @@ export const SellerWorkspace: React.FC = () => {
                 </div>
               )}
 
-              {wizardError && <p className="text-xs text-[#D64B4B] font-medium">{wizardError}</p>}
+              {wizardError && <p className="text-xs text-[#C53939] font-medium">{wizardError}</p>}
 
-              <div className="flex items-center justify-between pt-4 border-t border-[#E5E9ED]">
+              <div className="flex items-center justify-between pt-4 border-t border-[#DFE6EE]">
                 <Button
                   type="button"
                   variant="secondary"
@@ -836,23 +891,23 @@ export const SellerWorkspace: React.FC = () => {
 
       {tab === 'transactions' && (
         <div className="space-y-4">
-          <h1 className="text-xl font-bold text-[#10243A]">Seller Orders & Transactions</h1>
+          <h1 className="text-xl font-bold text-[#10243A] tracking-tight">Seller Orders & Transactions</h1>
           <div className="space-y-3">
             {transactions.map((txn) => (
               <div
                 key={txn.id}
-                className="bg-white border border-[#E5E9ED] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5"
+                className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 transition-colors hover:border-[#C5D1DE]"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-mono text-[#697784]">
+                  <p className="text-xs font-mono text-[#526071]">
                     {txn.reference} · Buyer: {txn.buyerName}
                   </p>
                   <h3 className="text-[15px] font-bold text-[#10243A] mt-0.5 leading-snug">
                     {txn.listingTitle} ({txn.quantity} head)
                   </h3>
-                  <p className="text-xs text-[#697784] mt-0.5">Hub: {txn.collectionCentreName}</p>
+                  <p className="text-xs text-[#526071] mt-0.5">Hub: {txn.collectionCentreName}</p>
                 </div>
-                <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-[#E5E9ED] shrink-0">
+                <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2.5 sm:pt-0 border-t sm:border-t-0 border-[#DFE6EE] shrink-0">
                   <div className="text-left sm:text-right">
                     <p className="font-mono font-bold text-[#10243A] tabular-nums">{formatUSD(txn.agreedAmountUsd)}</p>
                     <StatusLabel tone={txn.state === 'Completed' ? 'success' : 'info'} label={txn.state} />
@@ -871,18 +926,18 @@ export const SellerWorkspace: React.FC = () => {
 
       {tab === 'verification' && (
         <div className="space-y-4">
-          <h1 className="text-xl font-bold text-[#10243A]">Herd Verification Status</h1>
+          <h1 className="text-xl font-bold text-[#10243A] tracking-tight">Herd Verification Status</h1>
           <div className="space-y-3">
             {myListings.map((l) => (
               <div
                 key={l.id}
-                className="bg-white border border-[#E5E9ED] rounded-lg p-4 flex flex-wrap items-center justify-between gap-3"
+                className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4 flex flex-wrap items-center justify-between gap-3"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-mono text-[#697784]">{l.reference}</p>
+                  <p className="text-xs font-mono text-[#526071]">{l.reference}</p>
                   <p className="text-sm font-bold text-[#10243A]">{l.title}</p>
-                  <p className="text-xs text-[#697784] mt-0.5">
-                    {l.district}, {l.province} · {l.quantity} head
+                  <p className="text-xs text-[#526071] mt-0.5">
+                    {getCountryFlag(l.country)} {l.district}, {l.province}, {l.country} · {l.quantity} head
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2.5 shrink-0">
@@ -908,17 +963,17 @@ export const SellerWorkspace: React.FC = () => {
 
       {tab === 'reviews' && (
         <div className="space-y-4">
-          <h1 className="text-xl font-bold text-[#10243A]">Buyer Reviews</h1>
+          <h1 className="text-xl font-bold text-[#10243A] tracking-tight">Buyer Reviews</h1>
           <div className="space-y-3">
             {reviews.map((r) => (
-              <div key={r.id} className="bg-white border border-[#E5E9ED] rounded-lg p-4">
+              <div key={r.id} className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs">
                   <span className="font-bold text-[#10243A]">{r.buyerName}</span>
-                  <span className="font-mono text-[#697784]">
+                  <span className="font-mono text-[#526071]">
                     {r.rating.toFixed(1)}/5.0 · {formatDate(r.createdAt)}
                   </span>
                 </div>
-                <p className="text-sm text-[#697784] mt-2 leading-relaxed prose-justify">{r.comment}</p>
+                <p className="text-sm text-[#526071] mt-2 leading-relaxed prose-justify">{r.comment}</p>
               </div>
             ))}
           </div>
@@ -932,10 +987,13 @@ export const SellerWorkspace: React.FC = () => {
             updateCurrentUserProfile({
               organization: sellerSettings.organization.trim(),
               phone: sellerSettings.phone.trim(),
+              country: sellerSettings.country,
+              province: sellerSettings.province,
+              district: sellerSettings.district,
               meta: { ...(currentUser?.meta || {}), vetReg: sellerSettings.vetReg.trim() },
             });
           }}
-          className="bg-white border border-[#E5E9ED] rounded-lg p-5 max-w-xl space-y-4"
+          className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)] p-5 max-w-xl space-y-4"
         >
           <h1 className="text-lg font-bold text-[#10243A]">Farm & Seller Settings</h1>
           <Input
@@ -944,6 +1002,55 @@ export const SellerWorkspace: React.FC = () => {
             onChange={(e) => setSellerSettings({ ...sellerSettings, organization: e.target.value })}
             required
           />
+          <CountrySelect
+            label="Country (All 54 African Nations)"
+            value={sellerSettings.country}
+            showDialCode
+            onChange={(nextCountry) => {
+              const nextProvs = getProvincesForCountry(nextCountry);
+              const firstProv = nextProvs[0] || '';
+              const firstDist = firstProv
+                ? getDistrictsForProvince(nextCountry, firstProv)[0] || ''
+                : '';
+              setSellerSettings({
+                ...sellerSettings,
+                country: nextCountry,
+                province: firstProv,
+                district: firstDist,
+              });
+            }}
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <Select
+              label="Province / County"
+              value={sellerSettings.province}
+              onChange={(e) => {
+                const nextProv = e.target.value;
+                setSellerSettings({
+                  ...sellerSettings,
+                  province: nextProv,
+                  district: getDistrictsForProvince(sellerSettings.country, nextProv)[0] || '',
+                });
+              }}
+            >
+              {getProvincesForCountry(sellerSettings.country).map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </Select>
+            <Select
+              label="District / Town"
+              value={sellerSettings.district}
+              onChange={(e) => setSellerSettings({ ...sellerSettings, district: e.target.value })}
+            >
+              {getDistrictsForProvince(sellerSettings.country, sellerSettings.province).map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </Select>
+          </div>
           <Input
             label="Contact Phone"
             value={sellerSettings.phone}
@@ -951,7 +1058,7 @@ export const SellerWorkspace: React.FC = () => {
             required
           />
           <Input
-            label="DVS Registration Reference"
+            label={`National Veterinary Registration Ref (${getCountry(sellerSettings.country).vetAuthority})`}
             value={sellerSettings.vetReg}
             onChange={(e) => setSellerSettings({ ...sellerSettings, vetReg: e.target.value })}
           />
@@ -966,7 +1073,11 @@ export const SellerWorkspace: React.FC = () => {
         open={!!editingListing}
         onClose={() => setEditingListing(null)}
         title="Edit Livestock Listing"
-        subtitle={editingListing ? `${editingListing.reference} · ${editingListing.district}, ${editingListing.province}` : ''}
+        subtitle={
+          editingListing
+            ? `${editingListing.reference} · ${getCountryFlag(editingListing.country)} ${editingListing.district}, ${editingListing.province}, ${editingListing.country}`
+            : ''
+        }
       >
         <form onSubmit={handleSaveListingEdits} className="space-y-4">
           <Input
