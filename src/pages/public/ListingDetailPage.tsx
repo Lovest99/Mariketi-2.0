@@ -534,7 +534,7 @@ export const ListingDetailPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
             {!currentUser && (
               <p className="text-[11px] text-[#526071]">
-                Will submit under Buyer preview profile (Tendai Moyo).
+                You will be prompted to sign in with Google to record your offer.
               </p>
             )}
             <div className="flex gap-2 sm:ml-auto justify-end">

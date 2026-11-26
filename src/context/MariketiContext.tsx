@@ -260,6 +260,7 @@ interface MariketiContextValue extends MariketiState {
   placeOnlineBid: (lotId: string, amountUsd: number, maxProxyUsd?: number) => boolean;
   recordFloorBid: (lotId: string, floorPaddle: string, amountUsd: number) => boolean;
   updateAuctionLotStatus: (lotId: string, status: AuctionLot['status']) => void;
+  hammerAndAdvanceLot: (lotId: string, outcome: 'Sold' | 'Passed In') => string | null;
 
   // Agri-Vet Online Store & Subscriptions
   cart: { productId: string; qty: number }[];
@@ -2334,14 +2335,33 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         pushToast('Lot is not open for live bidding', 'warning');
         return false;
       }
-      const minBid = lot.currentBidUsd + lot.bidIncrementUsd;
+      const minBid = Math.max(lot.openingBidUsd, lot.currentBidUsd + lot.bidIncrementUsd);
       if (!Number.isFinite(amountUsd) || amountUsd < minBid) {
         pushToast('Bid below minimum increment', 'warning', `Minimum valid bid is $${minBid.toLocaleString()}.`);
         return false;
       }
 
+      // Auto-register online paddle on first bid so bidding is 1-click smooth
+      if (!registeredAuctionIds.includes(lot.auctionId)) {
+        setRegisteredAuctionIds((prev) =>
+          prev.includes(lot.auctionId) ? prev : [...prev, lot.auctionId]
+        );
+        const parentAuction = state.auctions.find((a) => a.id === lot.auctionId);
+        if (parentAuction) {
+          const nextBidders = parentAuction.registeredBidders + 1;
+          setState((prev) => ({
+            ...prev,
+            auctions: prev.auctions.map((a) =>
+              a.id === lot.auctionId ? { ...a, registeredBidders: nextBidders } : a
+            ),
+          }));
+          runDbWrite(fsIncrementAuctionBidders(lot.auctionId, nextBidders), 'Auto-register bidder paddle');
+        }
+      }
+
       const bidderName = currentUser?.name || firebaseUser.displayName || 'MARIKETI Buyer';
       const now = new Date().toISOString();
+      const validProxy = maxProxyUsd && maxProxyUsd >= amountUsd ? maxProxyUsd : undefined;
       const newBid: AuctionBid = {
         id: `bid-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
         lotId: lot.id,
@@ -2351,7 +2371,7 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         paddleNumber: userPaddleNumber,
         channel: 'Online',
         amountUsd,
-        maxProxyUsd: maxProxyUsd && maxProxyUsd >= amountUsd ? maxProxyUsd : undefined,
+        maxProxyUsd: validProxy,
         timestamp: now,
       };
 
@@ -2379,10 +2399,29 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }));
       runDbWrite(fsPlaceAuctionBid(lot, newBid), 'Place online auction bid');
       addAudit(bidderName, currentUser?.role || 'buyer', `Placed online bid ($${amountUsd})`, `${lot.lotNumber} (${userPaddleNumber})`);
-      pushToast('Online bid confirmed', 'success', `You hold the high bid on ${lot.lotNumber} at $${amountUsd.toLocaleString()}.`);
+
+      const reserveJustMet = lot.currentBidUsd < lot.reservePriceUsd && amountUsd >= lot.reservePriceUsd;
+      pushToast(
+        reserveJustMet ? 'Bid confirmed — Reserve Met' : 'Online bid confirmed',
+        'success',
+        validProxy
+          ? `Leading ${lot.lotNumber} at $${amountUsd.toLocaleString()} (Auto-bid proxy active up to $${validProxy.toLocaleString()}).`
+          : `You hold the high bid on ${lot.lotNumber} at $${amountUsd.toLocaleString()}.`
+      );
       return true;
     },
-    [firebaseUser, state.auctionLots, currentUser, userPaddleNumber, openAuth, pushToast, runDbWrite, addAudit]
+    [
+      firebaseUser,
+      state.auctionLots,
+      state.auctions,
+      registeredAuctionIds,
+      currentUser,
+      userPaddleNumber,
+      openAuth,
+      pushToast,
+      runDbWrite,
+      addAudit,
+    ]
   );
 
   const recordFloorBid = useCallback(
@@ -2396,14 +2435,14 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         pushToast('Open lot to Live before logging floor bids', 'warning');
         return false;
       }
-      const minBid = lot.currentBidUsd + lot.bidIncrementUsd;
+      const minBid = Math.max(lot.openingBidUsd, lot.currentBidUsd + lot.bidIncrementUsd);
       if (!Number.isFinite(amountUsd) || amountUsd < minBid) {
         pushToast('Floor bid too low', 'warning', `Enter at least $${minBid.toLocaleString()}.`);
         return false;
       }
       const cleanPaddle = floorPaddle.trim().toUpperCase() || 'FLOOR-101';
       const now = new Date().toISOString();
-      const newBid: AuctionBid = {
+      const floorBid: AuctionBid = {
         id: `bid-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
         lotId: lot.id,
         auctionId: lot.auctionId,
@@ -2415,34 +2454,95 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         timestamp: now,
       };
 
+      // Check if an online bidder holds an active Auto-Bid Proxy cap above this floor bid
+      const existingBids = state.auctionBidsByLot[lotId] || [];
+      const bestOnlineProxy = existingBids
+        .filter((b) => b.channel === 'Online' && typeof b.maxProxyUsd === 'number' && b.maxProxyUsd >= amountUsd + lot.bidIncrementUsd)
+        .sort((a, b) => (b.maxProxyUsd || 0) - (a.maxProxyUsd || 0))[0];
+
+      const lotAfterFloor: AuctionLot = {
+        ...lot,
+        currentBidUsd: amountUsd,
+        bidCount: lot.bidCount + 1,
+        highestBidderId: floorBid.bidderId,
+        highestBidderName: floorBid.bidderName,
+        highestBidderPaddle: cleanPaddle,
+        highestBidChannel: 'Floor',
+      };
+
+      let proxyCounterBid: AuctionBid | null = null;
+      let finalLot: AuctionLot = lotAfterFloor;
+
+      if (bestOnlineProxy && bestOnlineProxy.maxProxyUsd) {
+        const counterAmount = Math.min(
+          bestOnlineProxy.maxProxyUsd,
+          amountUsd + lot.bidIncrementUsd
+        );
+        if (counterAmount >= amountUsd + lot.bidIncrementUsd) {
+          proxyCounterBid = {
+            id: `bid-${Date.now() + 1}-${Math.random().toString(36).slice(2, 5)}`,
+            lotId: lot.id,
+            auctionId: lot.auctionId,
+            bidderId: bestOnlineProxy.bidderId,
+            bidderName: bestOnlineProxy.bidderName,
+            paddleNumber: bestOnlineProxy.paddleNumber,
+            channel: 'Online',
+            amountUsd: counterAmount,
+            maxProxyUsd: bestOnlineProxy.maxProxyUsd,
+            timestamp: new Date(Date.now() + 250).toISOString(),
+          };
+          finalLot = {
+            ...lotAfterFloor,
+            currentBidUsd: counterAmount,
+            bidCount: lotAfterFloor.bidCount + 1,
+            highestBidderId: proxyCounterBid.bidderId,
+            highestBidderName: proxyCounterBid.bidderName,
+            highestBidderPaddle: proxyCounterBid.paddleNumber,
+            highestBidChannel: 'Online',
+          };
+        }
+      }
+
+      const appendedBids = proxyCounterBid ? [proxyCounterBid, floorBid] : [floorBid];
+
       setState((prev) => ({
         ...prev,
-        auctionLots: prev.auctionLots.map((l) =>
-          l.id === lotId
-            ? {
-                ...l,
-                currentBidUsd: amountUsd,
-                bidCount: l.bidCount + 1,
-                highestBidderId: newBid.bidderId,
-                highestBidderName: newBid.bidderName,
-                highestBidderPaddle: cleanPaddle,
-                highestBidChannel: 'Floor',
-              }
-            : l
-        ),
+        auctionLots: prev.auctionLots.map((l) => (l.id === lotId ? finalLot : l)),
         auctionBidsByLot: {
           ...prev.auctionBidsByLot,
-          [lotId]: [newBid, ...(prev.auctionBidsByLot[lotId] || [])].sort(
+          [lotId]: [...appendedBids, ...(prev.auctionBidsByLot[lotId] || [])].sort(
             (a, b) => b.amountUsd - a.amountUsd
           ),
         },
       }));
-      runDbWrite(fsPlaceAuctionBid(lot, newBid), 'Record physical floor bid');
-      addAudit(currentUser?.name || 'Auctioneer', 'admin', `Logged Floor Bid $${amountUsd} (${cleanPaddle})`, lot.lotNumber);
-      pushToast('Physical floor bid synced to online ring', 'info', `${cleanPaddle} leads at $${amountUsd.toLocaleString()}.`);
+
+      if (proxyCounterBid) {
+        const counterToWrite = proxyCounterBid;
+        runDbWrite(
+          fsPlaceAuctionBid(lot, floorBid).then(() =>
+            fsPlaceAuctionBid(lotAfterFloor, counterToWrite)
+          ),
+          'Record floor bid + auto proxy counter'
+        );
+        addAudit(
+          currentUser?.name || 'Auctioneer',
+          'admin',
+          `Logged Floor $${amountUsd} (${cleanPaddle}) · Auto-Proxy countered $${counterToWrite.amountUsd} (${counterToWrite.paddleNumber})`,
+          lot.lotNumber
+        );
+        pushToast(
+          'Auto-Bid Proxy Defended Lead',
+          'success',
+          `${cleanPaddle} bid $${amountUsd.toLocaleString()}, automatically countered by ${counterToWrite.paddleNumber} at $${counterToWrite.amountUsd.toLocaleString()}.`
+        );
+      } else {
+        runDbWrite(fsPlaceAuctionBid(lot, floorBid), 'Record physical floor bid');
+        addAudit(currentUser?.name || 'Auctioneer', 'admin', `Logged Floor Bid $${amountUsd} (${cleanPaddle})`, lot.lotNumber);
+        pushToast('Physical floor bid synced to online ring', 'info', `${cleanPaddle} leads at $${amountUsd.toLocaleString()}.`);
+      }
       return true;
     },
-    [firebaseUser, isAdminAccount, state.auctionLots, currentUser, pushToast, runDbWrite, addAudit]
+    [firebaseUser, isAdminAccount, state.auctionLots, state.auctionBidsByLot, currentUser, pushToast, runDbWrite, addAudit]
   );
 
   const updateAuctionLotStatus = useCallback(
@@ -2459,6 +2559,57 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       runDbWrite(fsUpdateAuctionLotStatus(lotId, status), 'Update auction lot status');
       addAudit(currentUser?.name || 'Auctioneer', 'admin', `Marked lot -> ${status}`, lot?.lotNumber || lotId);
       pushToast(`${lot?.lotNumber || 'Lot'} marked ${status}`, status === 'Sold' ? 'success' : 'info');
+    },
+    [firebaseUser, isAdminAccount, state.auctionLots, currentUser, pushToast, runDbWrite, addAudit]
+  );
+
+  const hammerAndAdvanceLot = useCallback(
+    (lotId: string, outcome: 'Sold' | 'Passed In'): string | null => {
+      if (!firebaseUser || !isAdminAccount) {
+        pushToast('Auctioneer permission required', 'warning');
+        return null;
+      }
+      const lot = state.auctionLots.find((l) => l.id === lotId);
+      if (!lot) return null;
+
+      const sameAuctionLots = state.auctionLots
+        .filter((l) => l.auctionId === lot.auctionId)
+        .sort((a, b) => a.lotNumber.localeCompare(b.lotNumber));
+      const nextQueued = sameAuctionLots.find((l) => l.id !== lotId && l.status === 'Queued') || null;
+
+      setState((prev) => ({
+        ...prev,
+        auctionLots: prev.auctionLots.map((l) => {
+          if (l.id === lotId) return { ...l, status: outcome };
+          if (nextQueued && l.id === nextQueued.id) return { ...l, status: 'Live' };
+          return l;
+        }),
+      }));
+
+      runDbWrite(fsUpdateAuctionLotStatus(lotId, outcome), 'Hammer current lot');
+      if (nextQueued) {
+        runDbWrite(fsUpdateAuctionLotStatus(nextQueued.id, 'Live'), 'Open next queued lot');
+      }
+
+      addAudit(
+        currentUser?.name || 'Auctioneer',
+        'admin',
+        nextQueued
+          ? `Hammered ${lot.lotNumber} (${outcome}) & opened ${nextQueued.lotNumber}`
+          : `Hammered ${lot.lotNumber} (${outcome})`,
+        lot.lotNumber
+      );
+
+      pushToast(
+        nextQueued
+          ? `${lot.lotNumber} ${outcome} — ${nextQueued.lotNumber} is now Live`
+          : `${lot.lotNumber} hammered ${outcome}`,
+        outcome === 'Sold' ? 'success' : 'info',
+        outcome === 'Sold'
+          ? `Hammer price: $${lot.currentBidUsd.toLocaleString()} (${lot.highestBidderPaddle || 'Ring'}).`
+          : 'Lot closed below reserve.'
+      );
+      return nextQueued ? nextQueued.id : null;
     },
     [firebaseUser, isAdminAccount, state.auctionLots, currentUser, pushToast, runDbWrite, addAudit]
   );
@@ -2707,6 +2858,7 @@ export const MariketiProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         placeOnlineBid,
         recordFloorBid,
         updateAuctionLotStatus,
+        hammerAndAdvanceLot,
         cart,
         currentUserSubscription,
         addToCart,

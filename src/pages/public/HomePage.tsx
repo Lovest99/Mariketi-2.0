@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
 import {
   ArrowRight,
-  Building2,
   ChevronDown,
-  Gavel,
   Search,
-  ShieldCheck,
-  ShoppingBag,
   Check,
-  MapPin,
-  FileCheck2,
-  Truck,
 } from 'lucide-react';
 import { useMariketi } from '../../context/MariketiContext';
 import {
@@ -155,14 +148,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
 
         <div className="relative max-w-[1280px] mx-auto px-4 sm:px-6 py-10 sm:py-14 lg:py-16">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold text-[#F69B3D] uppercase tracking-wider mb-2.5">
+            <p className="text-xs font-semibold text-[#F69B3D] mb-2.5">
               Verified Livestock Marketplace · Across Africa
             </p>
             <h1 className="text-3xl sm:text-5xl lg:text-[52px] font-extrabold leading-[1.08] tracking-tight text-white drop-shadow-[0_2px_12px_rgba(7,19,32,0.35)]">
               The smarter way to buy and sell livestock across Africa.
             </h1>
             <p className="mt-4 text-sm sm:text-base text-slate-200 leading-relaxed max-w-xl prose-justify tracking-[0.005em]">
-              Starting from Southern Africa and expanding across East, West, Central, and North Africa — discover field-verified herds, connect with trusted ranchers and abattoirs, and complete handover with confidence.
+              Starting from Southern Africa and expanding across East, West, Central, and North Africa — discover field-verified herds, join hybrid physical-and-online auctions, and complete handover with confidence.
             </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -179,15 +172,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
                 size="lg"
                 onClick={() => navigatePublic('auctions')}
               >
-                <Gavel className="w-4 h-4" />
                 Live Hybrid Auctions
-              </Button>
-              <Button
-                variant="inverted"
-                size="lg"
-                onClick={() => openAuth('register', 'seller')}
-              >
-                Sell Livestock
               </Button>
             </div>
           </div>
@@ -266,7 +251,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
       <section className="max-w-[1280px] mx-auto px-4 sm:px-6 py-10 lg:py-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
           <div>
-            <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider mb-1">Active Commercial Lots</p>
+            <p className="text-xs font-semibold text-[#1E547A] mb-1">Active Commercial Lots</p>
             <h2 className="text-2xl sm:text-[28px] font-bold text-[#10243A]">
               Featured verified livestock
             </h2>
@@ -300,7 +285,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
       <section className="max-w-[1280px] mx-auto px-4 sm:px-6 pb-10 lg:pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
           {/* Live Hybrid Auction Spotlight (7 cols) */}
-          <div className="lg:col-span-7 surface-navy-editorial text-white rounded-xl overflow-hidden border border-[#10243A] shadow-[0_12px_30px_rgba(7,19,32,0.16)] flex flex-col justify-between">
+          <div className="lg:col-span-7 surface-navy-editorial text-white rounded-xl overflow-hidden border border-[#10243A] shadow-[0_10px_28px_rgba(7,19,32,0.14)] flex flex-col justify-between">
             <div className="grid grid-cols-1 sm:grid-cols-12 h-full">
               <div className="sm:col-span-5 relative min-h-[210px] bg-[#071320]">
                 <SafeImage
@@ -308,15 +293,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
                   alt="MARIKETI Hybrid Physical and Online Livestock Auction Ring"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute top-3 left-3 bg-[#071320]/85 text-[#F69B3D] px-2.5 py-1 rounded text-[11px] font-mono font-bold border border-white/15">
-                  HYBRID RING · LIVE
-                </div>
               </div>
               <div className="sm:col-span-7 p-5 sm:p-6 flex flex-col justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold text-[#F69B3D] uppercase tracking-wider flex items-center gap-1.5">
-                    <Gavel className="w-3.5 h-3.5" aria-hidden="true" />
-                    Physical Sale Yards + Simultaneous Online Bidding
+                  <p className="text-xs font-semibold text-[#F69B3D]">
+                    Hybrid Sale Yards · Live Now
                   </p>
                   <h2 className="mt-1.5 text-xl font-bold text-white leading-snug">
                     {liveAuction?.title || 'Gwanda Regional Commercial Cattle Sale'}
@@ -339,13 +320,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex flex-wrap items-center gap-3">
                   <Button variant="accent" size="sm" onClick={() => navigatePublic('auctions')}>
                     Enter Live Hybrid Ring
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Button>
-                  <span className="text-xs text-slate-300 inline-flex items-center gap-1.5 font-mono tabular-nums">
-                    <Building2 className="w-3.5 h-3.5 text-[#F69B3D]" aria-hidden="true" />
+                  <span className="text-xs text-slate-300 font-mono tabular-nums">
                     {auctionCenters.length} Physical Centres
                   </span>
                 </div>
@@ -354,26 +334,24 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
           </div>
 
           {/* Agri-Vet Store & Subscriptions Spotlight (5 cols) */}
-          <div className="lg:col-span-5 bg-white border border-[#DFE6EE] rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(16,36,58,0.04)] flex flex-col justify-between">
-            <div className="relative h-36 bg-[#071320]">
+          <div className="lg:col-span-5 bg-white border border-[#DCE4EC] rounded-xl overflow-hidden shadow-[0_1px_2px_rgba(10,25,41,0.04)] flex flex-col justify-between">
+            <div className="h-40 bg-[#071320] overflow-hidden">
               <SafeImage
                 src={ASSET_IMAGES.agriVetSupplies}
                 alt="MARIKETI Agri-Vet vaccines, ear tags, and mineral blocks"
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#071320]/80 via-transparent to-transparent" />
-              <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-white text-xs font-semibold">
-                <span className="inline-flex items-center gap-1.5">
-                  <ShoppingBag className="w-3.5 h-3.5 text-[#F69B3D]" aria-hidden="true" />
-                  Agri-Vet Store & Plans
-                </span>
-                <span className="font-mono tabular-nums">{products.length} Vet-Approved SKUs</span>
-              </div>
             </div>
 
             <div className="p-5 flex-1 flex flex-col justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-[#10243A] leading-snug">
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <span className="font-semibold text-[#1E547A]">Agri-Vet Store & Plans</span>
+                  <span className="font-mono text-[#526071] tabular-nums">
+                    {products.length} Vet-Approved SKUs
+                  </span>
+                </div>
+                <h3 className="mt-1.5 text-lg font-bold text-[#10243A] leading-snug">
                   Order ranch supplies online & unlock member subscriptions.
                 </h3>
                 <p className="mt-1.5 text-xs text-[#526071] leading-relaxed">
@@ -396,7 +374,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
       <section className="bg-white border-y border-[#DFE6EE] py-10 lg:py-12">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
           <div className="mb-6">
-            <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider mb-1">Species Taxonomy</p>
+            <p className="text-xs font-semibold text-[#1E547A] mb-1">Species Taxonomy</p>
             <h2 className="text-2xl sm:text-[28px] font-bold text-[#10243A]">
               Browse by livestock category
             </h2>
@@ -439,7 +417,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
       <section className="max-w-[1280px] mx-auto px-4 sm:px-6 pt-10 lg:pt-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider mb-1">
+            <p className="text-xs font-semibold text-[#1E547A] mb-1">
               Continental Coverage · 54 African Nations
             </p>
             <h2 className="text-2xl sm:text-[28px] font-bold text-[#10243A]">
@@ -497,7 +475,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
       {/* How MARIKETI Works */}
       <section className="max-w-[1280px] mx-auto px-4 sm:px-6 py-10 lg:py-12">
         <div className="max-w-2xl mb-7">
-          <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider mb-1">End-to-End Trade Architecture</p>
+          <p className="text-xs font-semibold text-[#1E547A] mb-1">End-to-End Trade Architecture</p>
           <h2 className="text-2xl sm:text-[28px] font-bold text-[#10243A]">
             From farm inspection to verified handover
           </h2>
@@ -534,7 +512,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
 
             <div className="lg:col-span-6 flex flex-col justify-center space-y-5">
               <div>
-                <p className="text-xs font-semibold text-[#F69B3D] uppercase tracking-wider mb-1.5">
+                <p className="text-xs font-semibold text-[#F69B3D] mb-1.5">
                   Physical Field Verification
                 </p>
                 <h2 className="text-2xl sm:text-[28px] font-bold text-white leading-tight">
@@ -546,33 +524,21 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-white/15 text-sm">
-                <div className="flex items-start gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-[#F69B3D] mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-white">Physical Headcount & Ear Tags</p>
-                    <p className="text-xs text-slate-300 mt-0.5">Tag ranges recorded and matched to owner herd registers.</p>
-                  </div>
+                <div>
+                  <p className="font-semibold text-white">01. Physical Headcount & Ear Tags</p>
+                  <p className="text-xs text-slate-300 mt-0.5">Tag ranges recorded and matched to owner herd registers.</p>
                 </div>
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="w-4 h-4 text-[#F69B3D] mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-white">GPS & Time-Stamped Proof</p>
-                    <p className="text-xs text-slate-300 mt-0.5">Exact farm coordinates logged at point of inspection.</p>
-                  </div>
+                <div>
+                  <p className="font-semibold text-white">02. GPS & Time-Stamped Proof</p>
+                  <p className="text-xs text-slate-300 mt-0.5">Exact farm coordinates logged at point of inspection.</p>
                 </div>
-                <div className="flex items-start gap-2.5">
-                  <FileCheck2 className="w-4 h-4 text-[#F69B3D] mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-white">Veterinary Clearance Review</p>
-                    <p className="text-xs text-slate-300 mt-0.5">National veterinary movement permits (DVS, KVB, TVLA, DALRRD) checked.</p>
-                  </div>
+                <div>
+                  <p className="font-semibold text-white">03. Veterinary Clearance Review</p>
+                  <p className="text-xs text-slate-300 mt-0.5">National veterinary movement permits (DVS, KVB, TVLA, DALRRD) checked.</p>
                 </div>
-                <div className="flex items-start gap-2.5">
-                  <Truck className="w-4 h-4 text-[#F69B3D] mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-white">Collection Hub Continuity</p>
-                    <p className="text-xs text-slate-300 mt-0.5">Weighbridge intake and PIN-verified delivery release.</p>
-                  </div>
+                <div>
+                  <p className="font-semibold text-white">04. Collection Hub Continuity</p>
+                  <p className="text-xs text-slate-300 mt-0.5">Weighbridge intake and PIN-verified delivery release.</p>
                 </div>
               </div>
 
@@ -598,7 +564,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white border border-[#DFE6EE] rounded-xl p-5 sm:p-6 shadow-[0_1px_3px_rgba(16,36,58,0.04)] flex flex-col justify-between">
             <div>
-              <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider mb-1">For Farmers & Commercial Ranches</p>
+              <p className="text-xs font-semibold text-[#1E547A] mb-1">For Farmers & Commercial Ranches</p>
               <h3 className="text-xl font-bold text-[#10243A]">
                 Reach verified commercial buyers without middlemen eroding margins.
               </h3>
@@ -628,7 +594,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
 
           <div className="bg-white border border-[#DFE6EE] rounded-xl p-5 sm:p-6 shadow-[0_1px_3px_rgba(16,36,58,0.04)] flex flex-col justify-between">
             <div>
-              <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider mb-1">For Abattoirs, Feedlots & Breeders</p>
+              <p className="text-xs font-semibold text-[#1E547A] mb-1">For Abattoirs, Feedlots & Breeders</p>
               <h3 className="text-xl font-bold text-[#10243A]">
                 Procure inspected herds across Africa with complete traceability.
               </h3>
@@ -662,7 +628,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
       <section className="bg-white border-y border-[#DFE6EE] py-10 lg:py-12">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
           <div className="mb-6">
-            <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider mb-1">Verified Trade Outcomes</p>
+            <p className="text-xs font-semibold text-[#1E547A] mb-1">Verified Trade Outcomes</p>
             <h2 className="text-2xl sm:text-[28px] font-bold text-[#10243A]">
               Trusted by commercial ranchers and procurement leads across Africa
             </h2>
@@ -712,7 +678,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
       {/* FAQ Section */}
       <section className="max-w-[960px] mx-auto px-4 sm:px-6 py-10 lg:py-12">
         <div className="mb-6">
-          <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider mb-1">Common Questions</p>
+          <p className="text-xs font-semibold text-[#1E547A] mb-1">Common Questions</p>
           <h2 className="text-2xl sm:text-[28px] font-bold text-[#10243A]">
             Frequently asked questions
           </h2>

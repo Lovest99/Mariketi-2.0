@@ -88,17 +88,17 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const variants: Record<NonNullable<ButtonProps['variant']>, string> = {
     primary:
-      'bg-gradient-to-b from-[#16304E] to-[#0D1E32] text-white border border-[#0B1929] shadow-[0_1px_2px_rgba(9,24,39,0.22),inset_0_1px_0_rgba(255,255,255,0.12)] hover:from-[#1B3B60] hover:to-[#10243A] hover:shadow-[0_4px_12px_rgba(16,36,58,0.22)] active:scale-[0.985]',
+      'bg-[#10243A] text-white border border-[#0B1929] shadow-[0_1px_2px_rgba(9,24,39,0.18)] hover:bg-[#173352] active:scale-[0.99]',
     accent:
-      'bg-gradient-to-b from-[#F69B3D] to-[#E67E17] text-[#091827] font-semibold border border-[#D4700F]/30 shadow-[0_1px_2px_rgba(9,24,39,0.16),inset_0_1px_0_rgba(255,255,255,0.3)] hover:from-[#F8A54F] hover:to-[#DC7410] hover:shadow-[0_4px_14px_rgba(242,140,40,0.32)] active:scale-[0.985]',
+      'bg-[#F28C28] text-[#091827] font-semibold border border-[#D97817] shadow-[0_1px_2px_rgba(9,24,39,0.14)] hover:bg-[#E57F1C] active:scale-[0.99]',
     secondary:
-      'bg-white text-[#10243A] border border-[#D4DDE6] shadow-[0_1px_2px_rgba(16,36,58,0.04)] hover:bg-[#F7F9FC] hover:border-[#B6C3D1] hover:text-[#091827] active:scale-[0.985]',
+      'bg-white text-[#10243A] border border-[#CFD9E3] shadow-[0_1px_2px_rgba(16,36,58,0.03)] hover:bg-[#F7F9FC] hover:border-[#AEC0D2] hover:text-[#091827] active:scale-[0.99]',
     inverted:
-      'bg-white/[0.08] text-white border border-white/25 backdrop-blur-xs hover:bg-white/[0.16] hover:border-white/45 active:scale-[0.985]',
+      'bg-white/[0.08] text-white border border-white/25 backdrop-blur-xs hover:bg-white/[0.16] hover:border-white/45 active:scale-[0.99]',
     ghost:
-      'bg-transparent text-[#10243A] hover:bg-[#E7EEF4] hover:text-[#091827] border border-transparent active:scale-[0.985]',
+      'bg-transparent text-[#10243A] hover:bg-[#E7EEF4] hover:text-[#091827] border border-transparent active:scale-[0.99]',
     danger:
-      'bg-gradient-to-b from-[#DA4F4F] to-[#C23939] text-white border border-[#AD2F2F] shadow-[0_1px_2px_rgba(194,57,57,0.24),inset_0_1px_0_rgba(255,255,255,0.14)] hover:from-[#CC4141] hover:to-[#AE2F2F] active:scale-[0.985]',
+      'bg-[#C53939] text-white border border-[#AD2F2F] shadow-[0_1px_2px_rgba(194,57,57,0.2)] hover:bg-[#B22F2F] active:scale-[0.99]',
   };
 
   const sizes: Record<NonNullable<ButtonProps['size']>, string> = {
@@ -111,7 +111,7 @@ export const Button: React.FC<ButtonProps> = ({
     <button
       {...props}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap shrink-0 transition-all duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F28C28] disabled:opacity-50 disabled:pointer-events-none',
+        'inline-flex items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap shrink-0 transition-all duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F28C28] disabled:opacity-45 disabled:pointer-events-none',
         variants[variant],
         sizes[size],
         className
@@ -239,7 +239,7 @@ export const Card: React.FC<{
 }> = ({ children, className }) => (
   <div
     className={cn(
-      'bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.04)]',
+      'bg-white border border-[#DCE4EC] rounded-xl shadow-[0_1px_2px_rgba(10,25,41,0.04)]',
       className
     )}
   >
@@ -250,13 +250,14 @@ export const Card: React.FC<{
 export const StatusLabel: React.FC<{
   tone: 'success' | 'warning' | 'danger' | 'info' | 'neutral';
   label: string;
+  showIcon?: boolean;
   className?: string;
-}> = ({ tone, label, className }) => {
+}> = ({ tone, label, showIcon = false, className }) => {
   const styles = {
-    success: 'text-[#1A7A50]',
-    warning: 'text-[#9A630A]',
-    danger: 'text-[#C53939]',
-    info: 'text-[#1E547A]',
+    success: 'text-[#156B45]',
+    warning: 'text-[#9A5B06]',
+    danger: 'text-[#B92D2D]',
+    info: 'text-[#1A4D73]',
     neutral: 'text-[#526071]',
   };
   const Icon =
@@ -270,12 +271,12 @@ export const StatusLabel: React.FC<{
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap shrink-0',
+        'inline-flex items-center gap-1 text-xs font-semibold whitespace-nowrap shrink-0',
         styles[tone],
         className
       )}
     >
-      <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+      {showIcon && <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
       <span>{label}</span>
     </span>
   );

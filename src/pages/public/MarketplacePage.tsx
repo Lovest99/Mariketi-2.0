@@ -445,7 +445,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
     <div className={cn(!embedded && 'max-w-[1280px] mx-auto px-4 sm:px-6 py-6')}>
       {!embedded && (
         <div className="mb-4">
-          <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider mb-0.5">
+          <p className="text-xs font-semibold text-[#1E547A] mb-0.5">
             Pan-African Verified Discovery Engine · 54 Countries
           </p>
           <h1 className="text-2xl sm:text-[28px] font-bold text-[#10243A]">
@@ -472,7 +472,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
               : 'bg-white text-[#10243A] border-[#D4DDE6] hover:bg-[#F7F9FC] hover:border-[#B6C3D1]'
           )}
         >
-          🌍 All Africa (54)
+          All Africa (54)
         </button>
         {AFRICAN_REGION_SUMMARY.map((item) => (
           <button

@@ -3,12 +3,8 @@ import {
   Check,
   CheckCircle2,
   Minus,
-  Package,
   Plus,
-  Repeat,
   Search,
-  ShieldCheck,
-  ShoppingBag,
   ShoppingCart,
   Trash2,
   XCircle,
@@ -158,14 +154,13 @@ export const StorePlansPage: React.FC = () => {
             alt="MARIKETI veterinary vaccines, RFID ear tags, mineral blocks and ranch supplies"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#071320]/96 via-[#0A1C30]/88 to-[#091827]/55" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#071320]/96 via-[#0A1C30]/88 to-[#091827]/58" />
         </div>
 
         <div className="relative max-w-[1280px] mx-auto px-4 sm:px-6 py-9 sm:py-12">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
             <div className="max-w-2xl">
-              <p className="text-xs font-semibold text-[#F69B3D] uppercase tracking-wider flex items-center gap-2">
-                <ShoppingBag className="w-3.5 h-3.5" aria-hidden="true" />
+              <p className="text-xs font-semibold text-[#F69B3D]">
                 Agri-Vet Commerce & Recurring Memberships
               </p>
               <h1 className="mt-2 text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-white">
@@ -199,25 +194,20 @@ export const StorePlansPage: React.FC = () => {
       </section>
 
       {/* Segmented Tab Bar */}
-      <div className="bg-white border-b border-[#DFE6EE]">
+      <div className="bg-white border-b border-[#DCE4EC]">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div
             role="tablist"
             aria-label="Store and subscription sections"
-            className="inline-flex rounded-lg bg-[#EEF3F8] p-1 border border-[#DFE6EE] w-full sm:w-auto overflow-x-auto"
+            className="inline-flex rounded-lg bg-[#EEF3F8] p-1 border border-[#DCE4EC] w-full sm:w-auto overflow-x-auto"
           >
             {(
               [
-                { id: 'store', label: 'Agri-Vet Online Store', icon: ShoppingBag },
-                { id: 'plans', label: 'MARIKETI Subscriptions', icon: Repeat },
-                {
-                  id: 'orders',
-                  label: `My Orders (${myOrders.length})`,
-                  icon: Package,
-                },
+                { id: 'store', label: 'Agri-Vet Online Store' },
+                { id: 'plans', label: 'MARIKETI Subscriptions' },
+                { id: 'orders', label: `My Orders (${myOrders.length})` },
               ] as const
             ).map((tab) => {
-              const Icon = tab.icon;
               const active = activeTab === tab.id;
               return (
                 <button
@@ -227,14 +217,13 @@ export const StorePlansPage: React.FC = () => {
                   aria-selected={active}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    'flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-md text-xs sm:text-sm font-semibold whitespace-nowrap transition-all focus-visible:outline-2 focus-visible:outline-[#F28C28]',
+                    'flex-1 sm:flex-initial inline-flex items-center justify-center px-3.5 py-2 rounded-md text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28]',
                     active
-                      ? 'bg-[#10243A] text-white shadow-xs'
+                      ? 'bg-[#10243A] text-white'
                       : 'text-[#526071] hover:text-[#10243A]'
                   )}
                 >
-                  <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                  <span>{tab.label}</span>
+                  {tab.label}
                 </button>
               );
             })}
@@ -255,7 +244,7 @@ export const StorePlansPage: React.FC = () => {
           <div className="space-y-6">
             {/* Category & Search Controls */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="inline-flex flex-wrap rounded-lg bg-white p-1 border border-[#DFE6EE]">
+              <div className="inline-flex flex-wrap rounded-lg bg-white p-1 border border-[#DCE4EC]">
                 {PRODUCT_CATEGORIES.map((cat) => (
                   <button
                     key={cat}
@@ -280,7 +269,7 @@ export const StorePlansPage: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search vaccines, ear tags, licks, SKU..."
-                  className="w-full h-10 pl-9 pr-3 rounded-lg bg-white border border-[#D4DDE6] text-sm text-[#0F1B2A] placeholder:text-[#667587] focus:outline-none focus:border-[#10243A]"
+                  className="w-full h-10 pl-9 pr-3 rounded-lg bg-white border border-[#CFD9E3] text-sm text-[#0F1B2A] placeholder:text-[#667587] focus:outline-none focus:border-[#10243A]"
                 />
               </div>
             </div>
@@ -302,7 +291,7 @@ export const StorePlansPage: React.FC = () => {
                 }
               />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 {filteredProducts.map((product) => {
                   const inCartQty =
                     cart.find((c) => c.productId === product.id)?.qty || 0;
@@ -316,29 +305,23 @@ export const StorePlansPage: React.FC = () => {
 
                   return (
                     <Card key={product.id} className="overflow-hidden flex flex-col">
-                      <div className="relative aspect-[4/3] bg-[#071320] overflow-hidden">
+                      <div className="aspect-[4/3] bg-[#071320] overflow-hidden">
                         <SafeImage
                           src={product.image}
                           alt={product.name}
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute top-2.5 left-2.5 bg-[#071320]/85 text-white px-2 py-0.5 rounded text-[11px] font-mono font-semibold border border-white/15">
-                          {product.sku}
-                        </div>
                       </div>
 
                       <div className="p-4 flex-1 flex flex-col justify-between gap-3.5">
                         <div>
                           <div className="flex items-center justify-between gap-2 text-[11px]">
-                            <span className="font-semibold text-[#1E547A] truncate">
+                            <span className="font-semibold text-[#1A4D73] truncate">
                               {product.category}
                             </span>
-                            {product.vetApproved && (
-                              <span className="inline-flex items-center gap-1 font-semibold text-[#1A7A50] shrink-0">
-                                <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                                Vet Approved
-                              </span>
-                            )}
+                            <span className="font-mono text-[#526071] shrink-0 tabular-nums">
+                              {product.sku}
+                            </span>
                           </div>
 
                           <h3 className="mt-1.5 text-sm font-bold text-[#10243A] leading-snug">
@@ -346,27 +329,30 @@ export const StorePlansPage: React.FC = () => {
                           </h3>
                           <p className="text-xs text-[#526071] mt-0.5">
                             {product.brand} · {product.unitLabel}
+                            {product.vetApproved && (
+                              <span className="text-[#156B45] font-semibold"> · Vet Approved</span>
+                            )}
                           </p>
                           <p className="mt-2 text-xs text-[#526071] leading-relaxed line-clamp-3">
                             {product.description}
                           </p>
                         </div>
 
-                        <div className="pt-3 border-t border-[#DFE6EE] space-y-2.5">
+                        <div className="pt-3 border-t border-[#DCE4EC] space-y-2.5">
                           <div className="flex items-baseline justify-between gap-2">
                             <div>
                               <p className="font-mono text-lg font-extrabold text-[#10243A] tabular-nums">
                                 {formatUSD(hasActiveSub ? memberPrice : product.priceUsd)}
                               </p>
                               {discountPct > 0 && (
-                                <p className="text-[11px] text-[#1A7A50] font-medium">
+                                <p className="text-[11px] text-[#156B45] font-medium">
                                   {hasActiveSub
                                     ? `Member price (${discountPct}% off ${formatUSD(product.priceUsd)})`
                                     : `Save ${discountPct}% with MARIKETI Plan`}
                                 </p>
                               )}
                             </div>
-                            <span className="text-[11px] font-mono text-[#526071] tabular-nums">
+                            <span className="text-[11px] font-mono text-[#526071] tabular-nums shrink-0">
                               {product.stockQty} in stock
                             </span>
                           </div>
@@ -375,17 +361,15 @@ export const StorePlansPage: React.FC = () => {
                             Dispatch: {product.countryAvailability}
                           </p>
 
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant={inCartQty > 0 ? 'accent' : 'primary'}
-                              size="sm"
-                              className="w-full"
-                              onClick={() => addToCart(product.id, 1)}
-                            >
-                              <ShoppingCart className="w-3.5 h-3.5" />
-                              {inCartQty > 0 ? `Add Another (${inCartQty} in cart)` : 'Add to Cart'}
-                            </Button>
-                          </div>
+                          <Button
+                            variant={inCartQty > 0 ? 'accent' : 'primary'}
+                            size="sm"
+                            className="w-full"
+                            onClick={() => addToCart(product.id, 1)}
+                          >
+                            <ShoppingCart className="w-3.5 h-3.5" />
+                            {inCartQty > 0 ? `Add Another (${inCartQty} in cart)` : 'Add to Cart'}
+                          </Button>
                         </div>
                       </div>
                     </Card>
@@ -407,7 +391,7 @@ export const StorePlansPage: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2.5">
-                      <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider">
+                      <p className="text-xs font-semibold text-[#1A4D73]">
                         Your MARIKETI Membership
                       </p>
                       <StatusLabel
@@ -472,7 +456,7 @@ export const StorePlansPage: React.FC = () => {
             {/* Header + Monthly/Annual Toggle */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider">
+                <p className="text-xs font-semibold text-[#1A4D73]">
                   Predictable Commercial Plans
                 </p>
                 <h2 className="mt-1 text-2xl font-bold text-[#10243A]">
@@ -483,7 +467,7 @@ export const StorePlansPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="inline-flex rounded-lg bg-white p-1 border border-[#DFE6EE] shrink-0">
+              <div className="inline-flex rounded-lg bg-white p-1 border border-[#DCE4EC] shrink-0">
                 <button
                   type="button"
                   onClick={() => setBillingCycle('monthly')}
@@ -512,7 +496,7 @@ export const StorePlansPage: React.FC = () => {
             </div>
 
             {/* Pricing Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
               {SUBSCRIPTION_PLANS.map((plan) => {
                 const isCurrentPlan =
                   currentUserSubscription?.planId === plan.id &&
@@ -534,11 +518,11 @@ export const StorePlansPage: React.FC = () => {
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-[#1E547A]">
+                        <span className="text-xs font-semibold text-[#1A4D73]">
                           {plan.audience}
                         </span>
                         {plan.recommended && (
-                          <span className="text-[11px] font-bold text-[#C96A0F]">
+                          <span className="text-[11px] font-bold text-[#B85E09]">
                             Recommended
                           </span>
                         )}
@@ -548,7 +532,7 @@ export const StorePlansPage: React.FC = () => {
                         {plan.name}
                       </h3>
 
-                      <div className="mt-3 pb-3.5 border-b border-[#DFE6EE]">
+                      <div className="mt-3 pb-3.5 border-b border-[#DCE4EC]">
                         <div className="flex items-baseline gap-1">
                           <span className="font-mono text-3xl font-extrabold text-[#10243A] tabular-nums">
                             {formatUSD(price)}
@@ -558,12 +542,12 @@ export const StorePlansPage: React.FC = () => {
                           </span>
                         </div>
                         {billingCycle === 'annual' && (
-                          <p className="text-[11px] text-[#1A7A50] font-medium mt-0.5 font-mono tabular-nums">
+                          <p className="text-[11px] text-[#156B45] font-medium mt-0.5 font-mono tabular-nums">
                             Effective {formatUSD(monthlyEquivalent)}/mo billed annually
                           </p>
                         )}
                         {plan.includesSuppliesCreditUsd && (
-                          <p className="text-[11px] font-semibold text-[#C96A0F] mt-1 font-mono tabular-nums">
+                          <p className="text-[11px] font-semibold text-[#B85E09] mt-1 font-mono tabular-nums">
                             Includes {formatUSD(plan.includesSuppliesCreditUsd)}/mo Agri-Vet credit
                           </p>
                         )}
@@ -576,14 +560,14 @@ export const StorePlansPage: React.FC = () => {
                       <ul className="mt-4 space-y-2 text-xs text-[#0F1B2A]">
                         {plan.features.map((feat) => (
                           <li key={feat} className="flex items-start gap-2">
-                            <Check className="w-3.5 h-3.5 text-[#1A7A50] shrink-0 mt-0.5" />
+                            <Check className="w-3.5 h-3.5 text-[#156B45] shrink-0 mt-0.5" />
                             <span className="text-[#526071] leading-snug">{feat}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
-                    <div className="pt-3 border-t border-[#DFE6EE] space-y-2">
+                    <div className="pt-3 border-t border-[#DCE4EC] space-y-2">
                       <Button
                         variant={
                           isCurrentPlan
@@ -605,7 +589,7 @@ export const StorePlansPage: React.FC = () => {
                       >
                         {isCurrentPlan ? (
                           <>
-                            <CheckCircle2 className="w-4 h-4 text-[#1A7A50]" />
+                            <CheckCircle2 className="w-4 h-4 text-[#156B45]" />
                             Active Plan
                           </>
                         ) : currentUserSubscription ? (

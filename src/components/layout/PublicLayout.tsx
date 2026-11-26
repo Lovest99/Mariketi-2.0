@@ -10,7 +10,11 @@ const NAV_LINKS: { page: PublicPage; label: string }[] = [
   { page: 'store', label: 'Store & Plans' },
   { page: 'verification', label: 'Verification' },
   { page: 'about', label: 'About' },
-  { page: 'help', label: 'Help' },
+];
+
+const MOBILE_NAV_LINKS: { page: PublicPage; label: string }[] = [
+  ...NAV_LINKS,
+  { page: 'help', label: 'Help Centre' },
 ];
 
 export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -51,7 +55,7 @@ export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children
           {/* Zone 2: 5 clean single-line text navigation links */}
           <nav
             aria-label="Primary navigation"
-            className="hidden md:flex items-center gap-6 text-sm font-medium text-[#526071]"
+            className="hidden lg:flex items-center gap-7 text-sm font-medium text-[#526071]"
           >
             {NAV_LINKS.map((link) => {
               const active = publicPage === link.page;
@@ -75,7 +79,7 @@ export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children
 
           {/* Zone 3: Single Primary Action */}
           <div className="flex items-center gap-2 shrink-0">
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
               {currentUser ? (
                 <Button variant="primary" size="md" onClick={openWorkspace}>
                   Open Workspace
@@ -90,17 +94,17 @@ export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children
               type="button"
               onClick={() => setMobileNavOpen((v) => !v)}
               aria-label="Toggle menu"
-              className="md:hidden h-10 w-10 rounded-lg border border-[#D4DDE6] bg-white hover:bg-[#F7F9FC] flex items-center justify-center text-[#10243A] transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28]"
+              className="lg:hidden h-10 w-10 rounded-lg border border-[#CFD9E3] bg-white hover:bg-[#F7F9FC] flex items-center justify-center text-[#10243A] transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28]"
             >
               {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
+        {/* Mobile / Tablet Dropdown Menu */}
         {mobileNavOpen && (
-          <div className="md:hidden bg-white border-b border-[#DFE6EE] shadow-[0_12px_28px_rgba(16,36,58,0.08)] px-4 py-4 space-y-1.5">
-            {NAV_LINKS.map((link) => (
+          <div className="lg:hidden bg-white border-b border-[#DFE6EE] shadow-[0_12px_28px_rgba(16,36,58,0.08)] px-4 py-4 space-y-1.5">
+            {MOBILE_NAV_LINKS.map((link) => (
               <button
                 key={link.page}
                 type="button"
@@ -180,7 +184,7 @@ export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children
             </div>
 
             <div>
-              <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">
+              <h3 className="text-xs font-semibold text-white mb-3">
                 Ecosystem Portals
               </h3>
               <ul className="space-y-2 text-sm text-slate-300/90">
@@ -224,7 +228,7 @@ export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children
             </div>
 
             <div>
-              <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">
+              <h3 className="text-xs font-semibold text-white mb-3">
                 Role Workspaces (Preview)
               </h3>
               <ul className="space-y-2 text-sm text-slate-300/90">
@@ -262,7 +266,7 @@ export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children
             </div>
 
             <div>
-              <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">
+              <h3 className="text-xs font-semibold text-white mb-3">
                 Trust & Legal
               </h3>
               <ul className="space-y-2 text-sm text-slate-300/90">

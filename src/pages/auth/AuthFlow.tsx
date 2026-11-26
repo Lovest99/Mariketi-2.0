@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
 import {
   ArrowRight,
-  Building2,
   CheckCircle2,
   ClipboardCheck,
   Loader2,
@@ -397,9 +396,8 @@ export const AuthFlow: React.FC = () => {
 
               {regStep === 2 && (
                 <form onSubmit={handleCompleteOnboarding} className="space-y-4">
-                  <div className="flex items-center justify-between gap-2 text-xs font-semibold text-[#1E547A]">
-                    <span className="inline-flex items-center gap-2">
-                      <Building2 className="w-4 h-4" />
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[#1E547A]">
+                    <span>
                       Tailored {ROLES.find((r) => r.role === selectedRole)?.title} Setup
                     </span>
                     <span className="text-[#526071] font-medium">
@@ -446,7 +444,7 @@ export const AuthFlow: React.FC = () => {
         {/* Right: Role Workspace Access */}
         <div className="lg:col-span-5 surface-navy-editorial text-white rounded-xl border border-white/10 shadow-[0_14px_36px_rgba(9,24,39,0.22)] p-5 sm:p-6 space-y-4">
           <div>
-            <p className="text-xs font-semibold text-[#F69B3D] uppercase tracking-wider">Pan-African Workspaces</p>
+            <p className="text-xs font-semibold text-[#F69B3D]">Pan-African Workspaces</p>
             <h2 className="text-lg sm:text-xl font-bold text-white mt-1">Enter your MARIKETI role workspace</h2>
             <p className="text-xs text-slate-300 mt-1.5 leading-relaxed prose-justify">
               Built for Southern Africa, East Africa, and the whole continent. Select a workspace below to sign in with Google and access dedicated role tools.

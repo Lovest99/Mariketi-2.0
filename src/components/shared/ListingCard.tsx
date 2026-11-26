@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bookmark, GitCompareArrows, ShieldCheck, Clock, ArrowUpRight } from 'lucide-react';
+import { Bookmark, GitCompareArrows, ArrowUpRight } from 'lucide-react';
 import { cn, formatDate, formatUSD, getCountryFlag } from '../../lib/utils';
 import type { LivestockListing } from '../../types/mariketi';
 import { SafeImage } from '../ui/DesignSystem';
@@ -50,13 +50,11 @@ export const ListingCard: React.FC<ListingCardProps> = ({
                 <span className="truncate">{listing.category} · {listing.breed}</span>
               </div>
               {isVerified ? (
-                <span className="inline-flex items-center gap-1 text-[#1A7A50] font-semibold whitespace-nowrap shrink-0">
-                  <ShieldCheck className="w-3.5 h-3.5" />
+                <span className="text-[#156B45] font-semibold whitespace-nowrap shrink-0">
                   Verified
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-[#9A630A] font-semibold whitespace-nowrap shrink-0">
-                  <Clock className="w-3.5 h-3.5" />
+                <span className="text-[#9A5B06] font-semibold whitespace-nowrap shrink-0">
                   {listing.verificationStatus}
                 </span>
               )}
@@ -136,7 +134,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({
               <button
                 type="button"
                 onClick={() => onOpen(listing.id)}
-                className="group h-9 px-3.5 rounded-lg bg-gradient-to-b from-[#16304E] to-[#0D1E32] text-white text-xs font-semibold inline-flex items-center gap-1 shadow-[0_1px_2px_rgba(9,24,39,0.2)] hover:from-[#1B3B60] hover:to-[#10243A] active:scale-[0.985] transition-all duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#F28C28]"
+                className="group h-9 px-3.5 rounded-lg bg-[#10243A] text-white text-xs font-semibold inline-flex items-center gap-1 shadow-[0_1px_2px_rgba(9,24,39,0.18)] hover:bg-[#173352] active:scale-[0.99] transition-all duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#F28C28]"
               >
                 Inspect lot
                 <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -193,13 +191,11 @@ export const ListingCard: React.FC<ListingCardProps> = ({
             {listing.category} · {listing.breed}
           </span>
           {isVerified ? (
-            <span className="inline-flex items-center gap-1 text-[#1A7A50] font-semibold whitespace-nowrap shrink-0">
-              <ShieldCheck className="w-3.5 h-3.5" />
+            <span className="text-[#156B45] font-semibold whitespace-nowrap shrink-0">
               Verified
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-[#9A630A] font-semibold whitespace-nowrap shrink-0">
-              <Clock className="w-3.5 h-3.5" />
+            <span className="text-[#9A5B06] font-semibold whitespace-nowrap shrink-0">
               {listing.verificationStatus}
             </span>
           )}

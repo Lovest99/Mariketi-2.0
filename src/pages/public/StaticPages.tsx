@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { z } from 'zod';
-import { ArrowRight, CheckCircle2, Mail, MapPin, Phone, Search, ShieldCheck } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Mail, MapPin, Phone, Search } from 'lucide-react';
 import { useMariketi, type PublicPage } from '../../context/MariketiContext';
 import { ASSET_IMAGES } from '../../lib/utils';
 import { Button, Input, SafeImage, Textarea } from '../../components/ui/DesignSystem';
@@ -44,7 +44,7 @@ export const StaticPages: React.FC<{ page: PublicPage }> = ({ page }) => {
     return (
       <div className="max-w-[1040px] mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-7">
         <div className="space-y-2.5 max-w-2xl">
-          <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider">About MARIKETI</p>
+          <p className="text-xs font-semibold text-[#1E547A]">About MARIKETI</p>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#10243A]">
             Building trusted commercial infrastructure for African livestock.
           </h1>
@@ -101,7 +101,7 @@ export const StaticPages: React.FC<{ page: PublicPage }> = ({ page }) => {
     return (
       <div className="max-w-[1040px] mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-7">
         <div className="max-w-2xl space-y-2">
-          <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider">Trade Lifecycle</p>
+          <p className="text-xs font-semibold text-[#1E547A]">Trade Lifecycle</p>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#10243A]">
             How MARIKETI moves livestock from ranch to handover
           </h1>
@@ -132,7 +132,7 @@ export const StaticPages: React.FC<{ page: PublicPage }> = ({ page }) => {
       <div className="max-w-[1040px] mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-7">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           <div className="lg:col-span-6 space-y-3.5 flex flex-col justify-center">
-            <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider">Verification Protocol</p>
+            <p className="text-xs font-semibold text-[#1E547A]">Verification Protocol</p>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#10243A]">
               Physical inspection standards built for agricultural reality.
             </h1>
@@ -148,7 +148,7 @@ export const StaticPages: React.FC<{ page: PublicPage }> = ({ page }) => {
               </Button>
             </div>
           </div>
-          <div className="lg:col-span-6 rounded-xl overflow-hidden border border-[#DFE6EE] shadow-[0_4px_16px_rgba(16,36,58,0.06)] min-h-[240px]">
+          <div className="lg:col-span-6 rounded-xl overflow-hidden border border-[#DCE4EC] shadow-[0_4px_16px_rgba(16,36,58,0.06)] min-h-[240px]">
             <SafeImage
               src={ASSET_IMAGES.fieldAgent}
               alt="Field verification inspector examining cattle"
@@ -159,14 +159,14 @@ export const StaticPages: React.FC<{ page: PublicPage }> = ({ page }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            ['Identity & Ownership', 'Confirms registered seller ID, brand mark, dipping/herd card, and farm location.'],
-            ['Breed & Conformation', 'Records observed breed purity, gender composition, and visual body condition score.'],
-            ['Weight & Headcount', 'Verifies exact lot headcount and digital scale or girth-tape live weight samples.'],
-            ['Veterinary Readiness', 'Checks vaccination history and national veterinary movement clearances (DVS, KVB, TVLA, DALRRD, NVRI).'],
-          ].map(([title, body]) => (
-            <div key={title} className="bg-white border border-[#DFE6EE] rounded-xl shadow-[0_1px_3px_rgba(16,36,58,0.03)] p-4">
-              <ShieldCheck className="w-4 h-4 text-[#1A7A50] mb-2" />
-              <h2 className="text-sm font-bold text-[#10243A]">{title}</h2>
+            ['01.', 'Identity & Ownership', 'Confirms registered seller ID, brand mark, dipping/herd card, and farm location.'],
+            ['02.', 'Breed & Conformation', 'Records observed breed purity, gender composition, and visual body condition score.'],
+            ['03.', 'Weight & Headcount', 'Verifies exact lot headcount and digital scale or girth-tape live weight samples.'],
+            ['04.', 'Veterinary Readiness', 'Checks vaccination history and national veterinary movement clearances (DVS, KVB, TVLA, DALRRD, NVRI).'],
+          ].map(([num, title, body]) => (
+            <div key={title} className="bg-white border border-[#DCE4EC] rounded-xl shadow-[0_1px_2px_rgba(10,25,41,0.04)] p-4">
+              <span className="font-mono text-xs font-bold text-[#C96A0F]">{num}</span>
+              <h2 className="text-sm font-bold text-[#10243A] mt-1">{title}</h2>
               <p className="text-xs text-[#526071] mt-1.5 leading-relaxed prose-justify">{body}</p>
             </div>
           ))}
@@ -180,7 +180,7 @@ export const StaticPages: React.FC<{ page: PublicPage }> = ({ page }) => {
       <div className="max-w-[1040px] mx-auto px-4 sm:px-6 py-8 sm:py-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-5 space-y-4">
-            <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider">Contact Operations</p>
+            <p className="text-xs font-semibold text-[#1E547A]">Contact Operations</p>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#10243A]">
               Speak with the MARIKETI trade desk.
             </h1>
@@ -277,7 +277,7 @@ export const StaticPages: React.FC<{ page: PublicPage }> = ({ page }) => {
     return (
       <div className="max-w-[960px] mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6">
         <div className="space-y-2.5">
-          <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider">Help Centre</p>
+          <p className="text-xs font-semibold text-[#1E547A]">Help Centre</p>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#10243A]">
             Guides for buyers, farmers, agents, and transport partners
           </h1>
@@ -312,7 +312,7 @@ export const StaticPages: React.FC<{ page: PublicPage }> = ({ page }) => {
   return (
     <div className="max-w-[820px] mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-5">
       <div className="space-y-1.5">
-        <p className="text-xs font-semibold text-[#1E547A] uppercase tracking-wider">Legal & Compliance</p>
+        <p className="text-xs font-semibold text-[#1E547A]">Legal & Compliance</p>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-[#10243A]">
           {isTerms ? 'Terms of Trade' : 'Privacy & Data Protection Policy'}
         </h1>
