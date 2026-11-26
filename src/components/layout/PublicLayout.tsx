@@ -6,7 +6,8 @@ import { Button, MariketiLogo } from '../ui/DesignSystem';
 
 const NAV_LINKS: { page: PublicPage; label: string }[] = [
   { page: 'marketplace', label: 'Marketplace' },
-  { page: 'how-it-works', label: 'How It Works' },
+  { page: 'auctions', label: 'Auctions' },
+  { page: 'store', label: 'Store & Plans' },
   { page: 'verification', label: 'Verification' },
   { page: 'about', label: 'About' },
   { page: 'help', label: 'Help' },
@@ -164,16 +165,16 @@ export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children
                 <Button
                   variant="accent"
                   size="sm"
-                  onClick={() => navigatePublic('marketplace')}
+                  onClick={() => navigatePublic('auctions')}
                 >
-                  Explore Livestock
+                  Live Hybrid Auctions
                 </Button>
                 <Button
                   variant="inverted"
                   size="sm"
-                  onClick={() => openAuth('register', 'seller')}
+                  onClick={() => navigatePublic('store')}
                 >
-                  List Livestock
+                  Agri-Vet Store & Plans
                 </Button>
               </div>
             </div>
@@ -265,6 +266,16 @@ export const PublicLayout: React.FC<{ children: React.ReactNode }> = ({ children
                 Trust & Legal
               </h3>
               <ul className="space-y-2 text-sm text-slate-300/90">
+                <li>
+                  <button type="button" onClick={() => navigatePublic('auctions')} className="hover:text-white underline-offset-4 hover:underline transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28] rounded-xs">
+                    Hybrid Auctions & Sale Yards
+                  </button>
+                </li>
+                <li>
+                  <button type="button" onClick={() => navigatePublic('store')} className="hover:text-white underline-offset-4 hover:underline transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28] rounded-xs">
+                    Agri-Vet Store & Subscriptions
+                  </button>
+                </li>
                 <li>
                   <button type="button" onClick={() => navigatePublic('how-it-works')} className="hover:text-white underline-offset-4 hover:underline transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28] rounded-xs">
                     How It Works

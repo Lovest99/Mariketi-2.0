@@ -79,6 +79,8 @@ export const ASSET_IMAGES = {
   largeWhitePigs: '/src/assets/images/listing_largewhite_pigs_1795177646468.jpg',
   poultryBroilers: '/src/assets/images/listing_poultry_broilers_1795177649788.jpg',
   fieldAgent: '/src/assets/images/field_verification_agent_1795177647961.jpg',
+  auctionRing: '/src/assets/images/auction_ring_hero_1795677908569.jpg',
+  agriVetSupplies: '/src/assets/images/agrivet_supplies_hero_1795677910465.jpg',
 } as const;
 
 export const BRAND_ASSETS = {

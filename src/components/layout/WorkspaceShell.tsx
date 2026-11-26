@@ -49,6 +49,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
 }) => {
   const {
     currentUser,
+    isAdminAccount,
     notifications,
     markNotificationRead,
     markAllNotificationsRead,
@@ -91,46 +92,57 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
         </button>
       </div>
 
-      {/* Role Switcher */}
+      {/* Account & Admin Role Switcher */}
       <div className="px-3 py-2.5 border-b border-white/10">
-        <button
-          type="button"
-          onClick={() => setRoleSwitcherOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.11] border border-white/[0.08] transition-all duration-150 text-left focus-visible:outline-2 focus-visible:outline-[#F28C28]"
-        >
-          <div className="min-w-0">
+        {isAdminAccount ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setRoleSwitcherOpen((v) => !v)}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.11] border border-white/[0.08] transition-all duration-150 text-left focus-visible:outline-2 focus-visible:outline-[#F28C28]"
+            >
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-white truncate">{workspaceTitle}</p>
+                <p className="text-[11px] text-slate-300 truncate">
+                  {getCountryFlag(currentUser?.country)} {currentUser?.name}
+                </p>
+              </div>
+              <ChevronDown
+                className={cn(
+                  'w-4 h-4 text-slate-300 shrink-0 transition-transform duration-150',
+                  roleSwitcherOpen && 'rotate-180'
+                )}
+              />
+            </button>
+            {roleSwitcherOpen && (
+              <div className="mt-2 py-1 rounded-lg bg-[#10263F] border border-white/12 shadow-lg space-y-0.5">
+                {ROLE_LABELS.map((r) => (
+                  <button
+                    key={r.role}
+                    type="button"
+                    onClick={() => {
+                      loginAsRole(r.role);
+                      setRoleSwitcherOpen(false);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={cn(
+                      'w-full px-3 py-1.5 text-xs flex items-center justify-between text-left hover:bg-white/10 transition-colors',
+                      currentUser?.role === r.role ? 'text-[#F69B3D] font-semibold' : 'text-slate-200'
+                    )}
+                  >
+                    <span>{r.label}</span>
+                    {currentUser?.role === r.role && <Check className="w-3.5 h-3.5" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="w-full px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.08]">
             <p className="text-xs font-semibold text-white truncate">{workspaceTitle}</p>
             <p className="text-[11px] text-slate-300 truncate">
               {getCountryFlag(currentUser?.country)} {currentUser?.name}
             </p>
-          </div>
-          <ChevronDown
-            className={cn(
-              'w-4 h-4 text-slate-300 shrink-0 transition-transform duration-150',
-              roleSwitcherOpen && 'rotate-180'
-            )}
-          />
-        </button>
-        {roleSwitcherOpen && (
-          <div className="mt-2 py-1 rounded-lg bg-[#10263F] border border-white/12 shadow-lg space-y-0.5">
-            {ROLE_LABELS.map((r) => (
-              <button
-                key={r.role}
-                type="button"
-                onClick={() => {
-                  loginAsRole(r.role);
-                  setRoleSwitcherOpen(false);
-                  setMobileMenuOpen(false);
-                }}
-                className={cn(
-                  'w-full px-3 py-1.5 text-xs flex items-center justify-between text-left hover:bg-white/10 transition-colors',
-                  currentUser?.role === r.role ? 'text-[#F69B3D] font-semibold' : 'text-slate-200'
-                )}
-              >
-                <span>{r.label}</span>
-                {currentUser?.role === r.role && <Check className="w-3.5 h-3.5" />}
-              </button>
-            ))}
           </div>
         )}
       </div>
@@ -181,14 +193,16 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({
           <Globe className="w-4 h-4 text-slate-400" />
           Public Marketplace
         </button>
-        <button
-          type="button"
-          onClick={resetDemoData}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.07] transition-colors"
-        >
-          <RotateCcw className="w-4 h-4 text-slate-400" />
-          Reset Demo Data
-        </button>
+        {isAdminAccount && (
+          <button
+            type="button"
+            onClick={resetDemoData}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.07] transition-colors"
+          >
+            <RotateCcw className="w-4 h-4 text-slate-400" />
+            Reset Starter Dataset
+          </button>
+        )}
         <button
           type="button"
           onClick={logout}

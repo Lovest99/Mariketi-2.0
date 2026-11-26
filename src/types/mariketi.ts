@@ -366,3 +366,169 @@ export interface AuditLogEntry {
   target: string;
   timestamp: string;
 }
+
+// ============================================================================
+// Hybrid Physical + Online Auction System & Physical Auction Centers
+// ============================================================================
+
+export interface AuctionCenter {
+  id: string;
+  code: string;
+  name: string;
+  country: string;
+  province: string;
+  district: string;
+  address: string;
+  penCapacityHead: number;
+  weighbridgeCertified: boolean;
+  vetAuthority: string;
+  ringManager: string;
+  nextSaleDate: string;
+  status: 'Active' | 'Upcoming Sale' | 'Maintenance';
+  facilities: string[];
+  image: string;
+}
+
+export interface AuctionEvent {
+  id: string;
+  reference: string;
+  title: string;
+  centerId: string;
+  centerName: string;
+  country: string;
+  province: string;
+  district: string;
+  auctioneerName: string;
+  mode: 'Hybrid (Physical + Online)' | 'Online Timed';
+  status: 'Live Now' | 'Upcoming' | 'Completed';
+  startsAt: string;
+  endsAt: string;
+  totalLots: number;
+  registeredBidders: number;
+  catalogNotes: string;
+  coverImage: string;
+}
+
+export interface AuctionLot {
+  id: string;
+  auctionId: string;
+  lotNumber: string;
+  title: string;
+  category: LivestockCategory;
+  breed: string;
+  quantity: number;
+  avgWeightKg: number;
+  ageLabel: string;
+  gender: GenderType;
+  reservePriceUsd: number;
+  openingBidUsd: number;
+  currentBidUsd: number;
+  bidIncrementUsd: number;
+  bidCount: number;
+  highestBidderId?: string;
+  highestBidderName?: string;
+  highestBidderPaddle?: string;
+  highestBidChannel?: 'Online' | 'Floor';
+  status: 'Live' | 'Queued' | 'Sold' | 'Passed In';
+  vetCertRef: string;
+  farmOrigin: string;
+  country: string;
+  images: string[];
+  notes: string;
+}
+
+export interface AuctionBid {
+  id: string;
+  lotId: string;
+  auctionId: string;
+  bidderId: string;
+  bidderName: string;
+  paddleNumber: string;
+  channel: 'Online' | 'Floor';
+  amountUsd: number;
+  maxProxyUsd?: number;
+  timestamp: string;
+}
+
+// ============================================================================
+// Agri-Vet Products Store & MARIKETI Subscription System
+// ============================================================================
+
+export type AgriProductCategory =
+  | 'Veterinary & Vaccines'
+  | 'Traceability & Ear Tags'
+  | 'Nutrition & Minerals'
+  | 'Ranch Equipment';
+
+export interface AgriProduct {
+  id: string;
+  sku: string;
+  name: string;
+  category: AgriProductCategory;
+  brand: string;
+  priceUsd: number;
+  unitLabel: string;
+  stockQty: number;
+  vetApproved: boolean;
+  subscriptionEligible: boolean;
+  subscriptionDiscountPct?: number;
+  countryAvailability: string;
+  description: string;
+  image: string;
+}
+
+export interface ProductOrderItem {
+  productId: string;
+  name: string;
+  qty: number;
+  unitPriceUsd: number;
+}
+
+export interface ProductOrder {
+  id: string;
+  reference: string;
+  buyerId: string;
+  buyerName: string;
+  country: string;
+  deliveryAddress: string;
+  items: ProductOrderItem[];
+  totalUsd: number;
+  paymentMode: 'Simulated Demo Checkout (No Live Funds Charged)';
+  status: 'Pending' | 'Confirmed' | 'Dispatched' | 'Delivered' | 'Cancelled';
+  createdAt: string;
+}
+
+export type SubscriptionTier =
+  | 'buyer_pro'
+  | 'rancher_pro'
+  | 'vet_supplies_box'
+  | 'enterprise_auction';
+
+export interface SubscriptionPlan {
+  id: string;
+  tier: SubscriptionTier;
+  name: string;
+  audience: string;
+  monthlyUsd: number;
+  annualUsd: number;
+  summary: string;
+  features: string[];
+  includesSuppliesCreditUsd?: number;
+  recommended?: boolean;
+}
+
+export interface UserSubscription {
+  id: string;
+  userId: string;
+  userName: string;
+  planId: string;
+  planName: string;
+  tier: SubscriptionTier;
+  billingCycle: 'monthly' | 'annual';
+  amountUsd: number;
+  status: 'active' | 'paused' | 'cancelled';
+  startedAt: string;
+  renewsAt: string;
+  paymentMode: 'Simulated Demo Billing (No Live Card Charged)';
+}
+

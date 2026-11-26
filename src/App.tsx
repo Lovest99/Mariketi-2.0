@@ -5,6 +5,8 @@ import { PublicLayout } from './components/layout/PublicLayout';
 import { ToastStack } from './components/ui/DesignSystem';
 import { HomePage } from './pages/public/HomePage';
 import { MarketplacePage } from './pages/public/MarketplacePage';
+import { AuctionsPage } from './pages/public/AuctionsPage';
+import { StorePlansPage } from './pages/public/StorePlansPage';
 import { ListingDetailPage } from './pages/public/ListingDetailPage';
 import { StaticPages } from './pages/public/StaticPages';
 import { AuthFlow } from './pages/auth/AuthFlow';
@@ -14,6 +16,7 @@ import { FieldAgentWorkspace } from './pages/workspaces/FieldAgentWorkspace';
 import { CollectionCentreWorkspace } from './pages/workspaces/CollectionCentreWorkspace';
 import { TransportWorkspace } from './pages/workspaces/TransportWorkspace';
 import { AdminWorkspace } from './pages/workspaces/AdminWorkspace';
+import { ErrorBoundary } from './components/shared/ErrorBoundary';
 
 const MariketiRouter: React.FC = () => {
   const {
@@ -83,6 +86,12 @@ const MariketiRouter: React.FC = () => {
           />
         );
         break;
+      case 'auctions':
+        pageNode = <AuctionsPage />;
+        break;
+      case 'store':
+        pageNode = <StorePlansPage />;
+        break;
       case 'listing-detail':
         pageNode = <ListingDetailPage />;
         break;
@@ -106,8 +115,10 @@ const MariketiRouter: React.FC = () => {
 
 export default function App() {
   return (
-    <MariketiProvider>
-      <MariketiRouter />
-    </MariketiProvider>
+    <ErrorBoundary>
+      <MariketiProvider>
+        <MariketiRouter />
+      </MariketiProvider>
+    </ErrorBoundary>
   );
 }

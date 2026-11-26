@@ -1,0 +1,1729 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // PILLAR 0: GLOBAL SAFETY NET (Default Deny)
+    // =========================================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // PILLAR 3 & PRIMITIVES: Hardened Global Helpers
+    // =========================================================================
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidRef(val) {
+      return val is string && val.size() >= 3 && val.size() <= 40 && val.matches('^[A-Z0-9\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Bootstrapped Admin with verified-email guard (zero DB reads; safe in list rules)
+    function isBootstrapAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'brightcheteni1@gmail.com';
+    }
+
+    // Trusted DB-backed Admin check (for single-doc get/create/update/delete ONLY — never in list)
+    function isAdmin() {
+      return isBootstrapAdmin() ||
+        (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function hasTrustedRole(roleName) {
+      return isVerifiedUser() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == roleName;
+    }
+
+    function isStr(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isOptStr(data, key, maxLen) {
+      return !(key in data) || (data[key] is string && data[key].size() <= maxLen);
+    }
+
+    function isBoundedStrList(val, maxItems, maxItemLen) {
+      return val is list &&
+        val.size() <= maxItems &&
+        (val.size() == 0 || (val[0] is string && val[0].size() <= maxItemLen));
+    }
+
+    function isBoundedMapList(val, maxItems) {
+      return val is list &&
+        val.size() <= maxItems &&
+        (val.size() == 0 || val[0] is map);
+    }
+
+    function isValidCategory(cat) {
+      return cat in ['Cattle', 'Goats', 'Sheep', 'Pigs', 'Poultry', 'Other livestock'];
+    }
+
+    function isValidRole(role) {
+      return role in ['buyer', 'seller', 'agent', 'centre', 'transport', 'admin'];
+    }
+
+    function isNonAdminRole(role) {
+      return role in ['buyer', 'seller', 'agent', 'centre', 'transport'];
+    }
+
+    // =========================================================================
+    // PILLAR 2: VALIDATION BLUEPRINTS (Pure Static — Zero DB Reads)
+    // =========================================================================
+    function isValidAdminRecord(data) {
+      return data.keys().hasAll(['uid', 'email', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'createdAt']) &&
+        isValidId(data.uid) &&
+        isStr(data.email, 5, 160) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidUserAccount(data) {
+      return data.keys().hasAll([
+          'id', 'uid', 'name', 'email', 'phone', 'role', 'country', 'province',
+          'district', 'verified', 'status', 'rating', 'reviewCount', 'joinedAt',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'uid', 'name', 'email', 'phone', 'role', 'organization', 'country',
+          'province', 'district', 'verified', 'status', 'rating', 'reviewCount',
+          'joinedAt', 'savedListingIds', 'recentlyViewedIds', 'compareListingIds',
+          'meta', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.uid) &&
+        data.id == data.uid &&
+        isStr(data.name, 2, 120) &&
+        isStr(data.email, 5, 160) &&
+        isStr(data.phone, 0, 40) &&
+        isValidRole(data.role) &&
+        isOptStr(data, 'organization', 160) &&
+        isStr(data.country, 2, 80) &&
+        isStr(data.province, 0, 80) &&
+        isStr(data.district, 0, 80) &&
+        data.verified is bool &&
+        data.status in ['active', 'pending', 'suspended'] &&
+        data.rating is number && data.rating >= 0 && data.rating <= 5 &&
+        data.reviewCount is number && data.reviewCount >= 0 && data.reviewCount <= 100000 &&
+        isStr(data.joinedAt, 4, 64) &&
+        (!('savedListingIds' in data) || isBoundedStrList(data.savedListingIds, 200, 128)) &&
+        (!('recentlyViewedIds' in data) || isBoundedStrList(data.recentlyViewedIds, 20, 128)) &&
+        (!('compareListingIds' in data) || isBoundedStrList(data.compareListingIds, 5, 128)) &&
+        (!('meta' in data) || (data.meta is map && data.meta.size() <= 20)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPublicProfile(data) {
+      return data.keys().hasAll([
+          'id', 'uid', 'name', 'role', 'country', 'province', 'district',
+          'verified', 'status', 'rating', 'reviewCount', 'joinedAt',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'uid', 'name', 'role', 'organization', 'country', 'province',
+          'district', 'verified', 'status', 'rating', 'reviewCount', 'joinedAt',
+          'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.uid) &&
+        data.id == data.uid &&
+        isStr(data.name, 2, 120) &&
+        isValidRole(data.role) &&
+        isOptStr(data, 'organization', 160) &&
+        isStr(data.country, 2, 80) &&
+        isStr(data.province, 0, 80) &&
+        isStr(data.district, 0, 80) &&
+        data.verified is bool &&
+        data.status in ['active', 'pending', 'suspended'] &&
+        data.rating is number && data.rating >= 0 && data.rating <= 5 &&
+        data.reviewCount is number && data.reviewCount >= 0 && data.reviewCount <= 100000 &&
+        isStr(data.joinedAt, 4, 64) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidListing(data) {
+      return data.keys().hasAll([
+          'id', 'reference', 'title', 'category', 'breed', 'ageMonths', 'ageLabel',
+          'gender', 'weightKg', 'quantity', 'priceUsd', 'priceUnit', 'country',
+          'province', 'district', 'farmName', 'sellerId', 'sellerName', 'sellerRating',
+          'sellerVerified', 'verificationStatus', 'status', 'listedAt', 'images',
+          'description', 'vaccinationSummary', 'feedingRegime', 'views',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'reference', 'title', 'category', 'breed', 'ageMonths', 'ageLabel',
+          'gender', 'weightKg', 'quantity', 'priceUsd', 'priceUnit', 'country',
+          'province', 'district', 'farmName', 'sellerId', 'sellerName', 'sellerRating',
+          'sellerVerified', 'verificationStatus', 'verificationReport', 'status',
+          'listedAt', 'images', 'description', 'vaccinationSummary', 'feedingRegime',
+          'featured', 'views', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidRef(data.reference) &&
+        isStr(data.title, 4, 160) &&
+        isValidCategory(data.category) &&
+        isStr(data.breed, 2, 100) &&
+        data.ageMonths is number && data.ageMonths >= 0 && data.ageMonths <= 360 &&
+        isStr(data.ageLabel, 1, 60) &&
+        data.gender in ['Bull / Male', 'Cow / Female', 'Heifer', 'Steer / Ox', 'Mixed Herd'] &&
+        data.weightKg is number && data.weightKg > 0 && data.weightKg <= 5000 &&
+        data.quantity is number && data.quantity >= 1 && data.quantity <= 100000 &&
+        data.priceUsd is number && data.priceUsd > 0 && data.priceUsd <= 10000000 &&
+        data.priceUnit in ['per head', 'total lot'] &&
+        isStr(data.country, 2, 80) &&
+        isStr(data.province, 0, 80) &&
+        isStr(data.district, 0, 80) &&
+        isStr(data.farmName, 2, 140) &&
+        isValidId(data.sellerId) &&
+        isStr(data.sellerName, 2, 120) &&
+        data.sellerRating is number && data.sellerRating >= 0 && data.sellerRating <= 5 &&
+        data.sellerVerified is bool &&
+        data.verificationStatus in ['Verified', 'Inspection Scheduled', 'Pending Verification', 'Unverified'] &&
+        (!('verificationReport' in data) || (data.verificationReport is map && data.verificationReport.size() <= 20)) &&
+        data.status in ['active', 'paused', 'sold', 'archived', 'draft'] &&
+        isStr(data.listedAt, 4, 64) &&
+        isBoundedStrList(data.images, 10, 1000) &&
+        isStr(data.description, 0, 2000) &&
+        isStr(data.vaccinationSummary, 0, 600) &&
+        isStr(data.feedingRegime, 0, 300) &&
+        (!('featured' in data) || data.featured is bool) &&
+        data.views is number && data.views >= 0 && data.views <= 10000000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidOffer(data) {
+      return data.keys().hasAll([
+          'id', 'reference', 'listingId', 'listingTitle', 'listingRef',
+          'buyerId', 'buyerName', 'sellerId', 'sellerName', 'currentAmountUsd',
+          'quantity', 'status', 'lastActorRole', 'expiresAt', 'history',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'reference', 'listingId', 'listingTitle', 'listingRef',
+          'buyerId', 'buyerName', 'sellerId', 'sellerName', 'currentAmountUsd',
+          'quantity', 'status', 'lastActorRole', 'expiresAt', 'history',
+          'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidRef(data.reference) &&
+        isValidId(data.listingId) &&
+        isStr(data.listingTitle, 2, 160) &&
+        isStr(data.listingRef, 2, 40) &&
+        isValidId(data.buyerId) &&
+        isStr(data.buyerName, 2, 120) &&
+        isValidId(data.sellerId) &&
+        isStr(data.sellerName, 2, 120) &&
+        data.currentAmountUsd is number && data.currentAmountUsd > 0 && data.currentAmountUsd <= 100000000 &&
+        data.quantity is number && data.quantity >= 1 && data.quantity <= 100000 &&
+        data.status in ['pending', 'countered', 'accepted', 'rejected', 'expired', 'converted'] &&
+        data.lastActorRole in ['buyer', 'seller'] &&
+        isStr(data.expiresAt, 4, 64) &&
+        isBoundedMapList(data.history, 50) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll([
+          'id', 'reference', 'offerId', 'listingId', 'listingTitle', 'listingCategory',
+          'quantity', 'buyerId', 'buyerName', 'sellerId', 'sellerName', 'agreedAmountUsd',
+          'state', 'paymentMode', 'paymentStatus', 'collectionCentreName', 'pickupLocation',
+          'deliveryLocation', 'handoverCode', 'documents', 'timeline', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'reference', 'offerId', 'listingId', 'listingTitle', 'listingCategory',
+          'quantity', 'buyerId', 'buyerName', 'sellerId', 'sellerName', 'agreedAmountUsd',
+          'state', 'paymentMode', 'paymentStatus', 'collectionCentreName', 'pickupLocation',
+          'deliveryLocation', 'handoverCode', 'transportJobId', 'documents', 'timeline',
+          'hasReview', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidRef(data.reference) &&
+        isValidId(data.offerId) &&
+        isValidId(data.listingId) &&
+        isStr(data.listingTitle, 2, 160) &&
+        isValidCategory(data.listingCategory) &&
+        data.quantity is number && data.quantity >= 1 && data.quantity <= 100000 &&
+        isValidId(data.buyerId) &&
+        isStr(data.buyerName, 2, 120) &&
+        isValidId(data.sellerId) &&
+        isStr(data.sellerName, 2, 120) &&
+        data.agreedAmountUsd is number && data.agreedAmountUsd > 0 && data.agreedAmountUsd <= 100000000 &&
+        data.state in [
+          'Offer accepted', 'Initiated', 'Awaiting payment', 'Payment confirmed',
+          'Collection scheduled', 'Delivery scheduled', 'Handover initiated',
+          'Handover verified', 'Completed', 'Disputed', 'Cancelled'
+        ] &&
+        isStr(data.paymentMode, 2, 120) &&
+        data.paymentStatus in ['Unpaid', 'Demo Payment Confirmed', 'Refunded (Demo)'] &&
+        isStr(data.collectionCentreName, 2, 180) &&
+        isStr(data.pickupLocation, 2, 200) &&
+        isStr(data.deliveryLocation, 2, 200) &&
+        isStr(data.handoverCode, 3, 32) &&
+        isOptStr(data, 'transportJobId', 128) &&
+        isBoundedMapList(data.documents, 20) &&
+        isBoundedMapList(data.timeline, 50) &&
+        (!('hasReview' in data) || data.hasReview is bool) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidFieldTask(data) {
+      return data.keys().hasAll([
+          'id', 'reference', 'listingId', 'listingTitle', 'sellerId', 'sellerName',
+          'farmName', 'country', 'province', 'district', 'assignedAgentId',
+          'assignedAgentName', 'scheduledDate', 'priority', 'status',
+          'expectedCategory', 'expectedBreed', 'expectedQuantity', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'reference', 'listingId', 'listingTitle', 'sellerId', 'sellerName',
+          'sellerPhone', 'farmName', 'country', 'province', 'district', 'assignedAgentId',
+          'assignedAgentName', 'scheduledDate', 'priority', 'status',
+          'expectedCategory', 'expectedBreed', 'expectedQuantity', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidRef(data.reference) &&
+        isValidId(data.listingId) &&
+        isStr(data.listingTitle, 2, 160) &&
+        isValidId(data.sellerId) &&
+        isStr(data.sellerName, 2, 120) &&
+        isOptStr(data, 'sellerPhone', 40) &&
+        isStr(data.farmName, 2, 140) &&
+        isStr(data.country, 2, 80) &&
+        isStr(data.province, 0, 80) &&
+        isStr(data.district, 0, 80) &&
+        isValidId(data.assignedAgentId) &&
+        isStr(data.assignedAgentName, 2, 120) &&
+        isStr(data.scheduledDate, 4, 32) &&
+        data.priority in ['Standard', 'Urgent'] &&
+        data.status in ['Assigned', 'In Progress', 'Queued Offline', 'Completed'] &&
+        isValidCategory(data.expectedCategory) &&
+        isStr(data.expectedBreed, 2, 100) &&
+        data.expectedQuantity is number && data.expectedQuantity >= 1 && data.expectedQuantity <= 100000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCentreRecord(data) {
+      return data.keys().hasAll([
+          'id', 'reference', 'centreName', 'operatorId', 'transactionRef',
+          'listingTitle', 'category', 'quantity', 'sellerName', 'buyerName',
+          'penNumber', 'checkedWeightAvgKg', 'status', 'expectedAt',
+          'handoverPin', 'notes', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'reference', 'centreName', 'operatorId', 'buyerId', 'sellerId',
+          'country', 'transactionRef', 'listingTitle', 'category', 'quantity',
+          'sellerName', 'buyerName', 'penNumber', 'checkedWeightAvgKg', 'status',
+          'expectedAt', 'checkedInAt', 'releasedAt', 'handoverPin', 'notes',
+          'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidRef(data.reference) &&
+        isStr(data.centreName, 2, 180) &&
+        isValidId(data.operatorId) &&
+        isOptStr(data, 'buyerId', 128) &&
+        isOptStr(data, 'sellerId', 128) &&
+        isOptStr(data, 'country', 80) &&
+        isStr(data.transactionRef, 2, 40) &&
+        isStr(data.listingTitle, 2, 160) &&
+        isValidCategory(data.category) &&
+        data.quantity is number && data.quantity >= 1 && data.quantity <= 100000 &&
+        isStr(data.sellerName, 2, 120) &&
+        isStr(data.buyerName, 2, 120) &&
+        isStr(data.penNumber, 1, 60) &&
+        data.checkedWeightAvgKg is number && data.checkedWeightAvgKg >= 0 && data.checkedWeightAvgKg <= 5000 &&
+        data.status in ['Expected', 'Checked In', 'Inspected', 'Ready for Handover', 'Released'] &&
+        isStr(data.expectedAt, 4, 64) &&
+        isOptStr(data, 'checkedInAt', 64) &&
+        isOptStr(data, 'releasedAt', 64) &&
+        isStr(data.handoverPin, 3, 32) &&
+        isStr(data.notes, 0, 1000) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidTransportJob(data) {
+      return data.keys().hasAll([
+          'id', 'reference', 'transactionId', 'transactionRef', 'listingTitle',
+          'category', 'quantity', 'pickupLocation', 'destination', 'distanceKm',
+          'requirements', 'scheduledDate', 'feeUsd', 'status', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'reference', 'transactionId', 'transactionRef', 'listingTitle',
+          'category', 'quantity', 'buyerId', 'sellerId', 'pickupLocation',
+          'destination', 'country', 'distanceKm', 'requirements', 'scheduledDate',
+          'feeUsd', 'status', 'assignedPartnerId', 'assignedDriver', 'assignedVehicle',
+          'podRecipient', 'podCode', 'podDeliveredAt', 'podConditionNotes',
+          'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidRef(data.reference) &&
+        isValidId(data.transactionId) &&
+        isStr(data.transactionRef, 2, 40) &&
+        isStr(data.listingTitle, 2, 160) &&
+        isValidCategory(data.category) &&
+        data.quantity is number && data.quantity >= 1 && data.quantity <= 100000 &&
+        isOptStr(data, 'buyerId', 128) &&
+        isOptStr(data, 'sellerId', 128) &&
+        isStr(data.pickupLocation, 2, 200) &&
+        isStr(data.destination, 2, 200) &&
+        isOptStr(data, 'country', 80) &&
+        data.distanceKm is number && data.distanceKm >= 0 && data.distanceKm <= 20000 &&
+        isStr(data.requirements, 0, 500) &&
+        isStr(data.scheduledDate, 4, 32) &&
+        data.feeUsd is number && data.feeUsd >= 0 && data.feeUsd <= 1000000 &&
+        data.status in ['Available', 'Accepted', 'En Route to Pickup', 'Loaded & In Transit', 'Delivered'] &&
+        isOptStr(data, 'assignedPartnerId', 128) &&
+        isOptStr(data, 'assignedDriver', 120) &&
+        isOptStr(data, 'assignedVehicle', 80) &&
+        isOptStr(data, 'podRecipient', 120) &&
+        isOptStr(data, 'podCode', 40) &&
+        isOptStr(data, 'podDeliveredAt', 64) &&
+        isOptStr(data, 'podConditionNotes', 1000) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidVehicle(data) {
+      return data.keys().hasAll([
+          'id', 'partnerId', 'registration', 'model', 'capacityHead',
+          'suitableFor', 'driverName', 'driverPhone', 'status', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'partnerId', 'registration', 'model', 'capacityHead',
+          'suitableFor', 'driverName', 'driverPhone', 'status', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.partnerId) &&
+        isStr(data.registration, 2, 40) &&
+        isStr(data.model, 2, 120) &&
+        data.capacityHead is number && data.capacityHead >= 1 && data.capacityHead <= 2000 &&
+        isStr(data.suitableFor, 2, 160) &&
+        isStr(data.driverName, 2, 120) &&
+        isStr(data.driverPhone, 0, 40) &&
+        data.status in ['Available', 'On Route', 'Maintenance'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidConversation(data) {
+      return data.keys().hasAll([
+          'id', 'subject', 'contextType', 'contextRef', 'participantIds',
+          'participants', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'subject', 'contextType', 'contextRef', 'participantIds',
+          'participants', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isStr(data.subject, 2, 180) &&
+        data.contextType in ['Listing', 'Offer', 'Transaction', 'Verification'] &&
+        isStr(data.contextRef, 1, 60) &&
+        data.participantIds is list &&
+        data.participantIds.size() >= 2 &&
+        data.participantIds.size() <= 4 &&
+        isValidId(data.participantIds[0]) &&
+        isValidId(data.participantIds[1]) &&
+        isBoundedMapList(data.participants, 4) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll([
+          'id', 'senderId', 'senderName', 'senderRole', 'participantIds', 'text', 'read', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'senderId', 'senderName', 'senderRole', 'participantIds', 'text',
+          'attachmentName', 'read', 'createdAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.senderId) &&
+        isStr(data.senderName, 2, 120) &&
+        isValidRole(data.senderRole) &&
+        data.participantIds is list &&
+        data.participantIds.size() >= 2 &&
+        data.participantIds.size() <= 4 &&
+        isValidId(data.participantIds[0]) &&
+        isValidId(data.participantIds[1]) &&
+        isStr(data.text, 1, 2000) &&
+        isOptStr(data, 'attachmentName', 180) &&
+        data.read is bool &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll([
+          'id', 'recipientRole', 'title', 'body', 'category', 'read', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'recipientUserId', 'recipientRole', 'title', 'body',
+          'category', 'read', 'linkView', 'createdAt'
+        ]) &&
+        isValidId(data.id) &&
+        isOptStr(data, 'recipientUserId', 128) &&
+        data.recipientRole in ['buyer', 'seller', 'agent', 'centre', 'transport', 'admin', 'all'] &&
+        isStr(data.title, 2, 160) &&
+        isStr(data.body, 2, 600) &&
+        data.category in ['offer', 'verification', 'transaction', 'logistics', 'dispute', 'review'] &&
+        data.read is bool &&
+        isOptStr(data, 'linkView', 80) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidReview(data) {
+      return data.keys().hasAll([
+          'id', 'sellerId', 'sellerName', 'buyerId', 'buyerName',
+          'transactionId', 'transactionRef', 'rating', 'comment', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'sellerId', 'sellerName', 'buyerId', 'buyerName',
+          'transactionId', 'transactionRef', 'rating', 'comment', 'createdAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.sellerId) &&
+        isStr(data.sellerName, 2, 120) &&
+        isValidId(data.buyerId) &&
+        isStr(data.buyerName, 2, 120) &&
+        isValidId(data.transactionId) &&
+        isStr(data.transactionRef, 2, 40) &&
+        data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+        isStr(data.comment, 2, 1200) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidDispute(data) {
+      return data.keys().hasAll([
+          'id', 'reference', 'transactionId', 'transactionRef', 'openedById',
+          'openedBy', 'buyerId', 'sellerId', 'against', 'reason', 'description',
+          'status', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'reference', 'transactionId', 'transactionRef', 'openedById',
+          'openedBy', 'buyerId', 'sellerId', 'against', 'reason', 'description',
+          'status', 'resolution', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidRef(data.reference) &&
+        isValidId(data.transactionId) &&
+        isStr(data.transactionRef, 2, 40) &&
+        isValidId(data.openedById) &&
+        isStr(data.openedBy, 2, 140) &&
+        isValidId(data.buyerId) &&
+        isValidId(data.sellerId) &&
+        isStr(data.against, 2, 140) &&
+        isStr(data.reason, 3, 160) &&
+        isStr(data.description, 5, 2000) &&
+        data.status in ['Open', 'Under Investigation', 'Resolved'] &&
+        isOptStr(data, 'resolution', 2000) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll([
+          'id', 'actorId', 'actor', 'role', 'action', 'target', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'actorId', 'actor', 'role', 'action', 'target', 'createdAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.actorId) &&
+        isStr(data.actor, 2, 120) &&
+        isValidRole(data.role) &&
+        isStr(data.action, 2, 200) &&
+        isStr(data.target, 1, 160) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidAuctionCenter(data) {
+      return data.keys().hasAll([
+          'id', 'code', 'name', 'country', 'province', 'district', 'address',
+          'penCapacityHead', 'weighbridgeCertified', 'vetAuthority', 'ringManager',
+          'nextSaleDate', 'status', 'facilities', 'image', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'code', 'name', 'country', 'province', 'district', 'address',
+          'penCapacityHead', 'weighbridgeCertified', 'vetAuthority', 'ringManager',
+          'nextSaleDate', 'status', 'facilities', 'image', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidRef(data.code) &&
+        isStr(data.name, 3, 160) &&
+        isStr(data.country, 2, 80) &&
+        isStr(data.province, 0, 80) &&
+        isStr(data.district, 0, 80) &&
+        isStr(data.address, 3, 220) &&
+        data.penCapacityHead is number && data.penCapacityHead >= 10 && data.penCapacityHead <= 50000 &&
+        data.weighbridgeCertified is bool &&
+        isStr(data.vetAuthority, 2, 140) &&
+        isStr(data.ringManager, 2, 120) &&
+        isStr(data.nextSaleDate, 4, 64) &&
+        data.status in ['Active', 'Upcoming Sale', 'Maintenance'] &&
+        isBoundedStrList(data.facilities, 20, 120) &&
+        isStr(data.image, 0, 1000) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAuctionEvent(data) {
+      return data.keys().hasAll([
+          'id', 'reference', 'title', 'centerId', 'centerName', 'country',
+          'province', 'district', 'auctioneerName', 'mode', 'status',
+          'startsAt', 'endsAt', 'totalLots', 'registeredBidders', 'catalogNotes',
+          'coverImage', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'reference', 'title', 'centerId', 'centerName', 'country',
+          'province', 'district', 'auctioneerName', 'mode', 'status',
+          'startsAt', 'endsAt', 'totalLots', 'registeredBidders', 'catalogNotes',
+          'coverImage', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidRef(data.reference) &&
+        isStr(data.title, 4, 180) &&
+        isValidId(data.centerId) &&
+        isStr(data.centerName, 2, 160) &&
+        isStr(data.country, 2, 80) &&
+        isStr(data.province, 0, 80) &&
+        isStr(data.district, 0, 80) &&
+        isStr(data.auctioneerName, 2, 140) &&
+        data.mode in ['Hybrid (Physical + Online)', 'Online Timed'] &&
+        data.status in ['Live Now', 'Upcoming', 'Completed'] &&
+        isStr(data.startsAt, 4, 64) &&
+        isStr(data.endsAt, 4, 64) &&
+        data.totalLots is number && data.totalLots >= 0 && data.totalLots <= 5000 &&
+        data.registeredBidders is number && data.registeredBidders >= 0 && data.registeredBidders <= 100000 &&
+        isStr(data.catalogNotes, 0, 1200) &&
+        isStr(data.coverImage, 0, 1000) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAuctionLot(data) {
+      return data.keys().hasAll([
+          'id', 'auctionId', 'lotNumber', 'title', 'category', 'breed',
+          'quantity', 'avgWeightKg', 'ageLabel', 'gender', 'reservePriceUsd',
+          'openingBidUsd', 'currentBidUsd', 'bidIncrementUsd', 'bidCount',
+          'status', 'vetCertRef', 'farmOrigin', 'country', 'images', 'notes',
+          'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'auctionId', 'lotNumber', 'title', 'category', 'breed',
+          'quantity', 'avgWeightKg', 'ageLabel', 'gender', 'reservePriceUsd',
+          'openingBidUsd', 'currentBidUsd', 'bidIncrementUsd', 'bidCount',
+          'highestBidderId', 'highestBidderName', 'highestBidderPaddle',
+          'highestBidChannel', 'status', 'vetCertRef', 'farmOrigin', 'country',
+          'images', 'notes', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.auctionId) &&
+        isStr(data.lotNumber, 2, 32) &&
+        isStr(data.title, 4, 180) &&
+        isValidCategory(data.category) &&
+        isStr(data.breed, 2, 100) &&
+        data.quantity is number && data.quantity >= 1 && data.quantity <= 100000 &&
+        data.avgWeightKg is number && data.avgWeightKg > 0 && data.avgWeightKg <= 5000 &&
+        isStr(data.ageLabel, 1, 60) &&
+        data.gender in ['Bull / Male', 'Cow / Female', 'Heifer', 'Steer / Ox', 'Mixed Herd'] &&
+        data.reservePriceUsd is number && data.reservePriceUsd > 0 && data.reservePriceUsd <= 100000000 &&
+        data.openingBidUsd is number && data.openingBidUsd > 0 && data.openingBidUsd <= 100000000 &&
+        data.currentBidUsd is number && data.currentBidUsd >= data.openingBidUsd && data.currentBidUsd <= 100000000 &&
+        data.bidIncrementUsd is number && data.bidIncrementUsd >= 5 && data.bidIncrementUsd <= 100000 &&
+        data.bidCount is number && data.bidCount >= 0 && data.bidCount <= 100000 &&
+        isOptStr(data, 'highestBidderId', 128) &&
+        isOptStr(data, 'highestBidderName', 120) &&
+        isOptStr(data, 'highestBidderPaddle', 32) &&
+        (!('highestBidChannel' in data) || data.highestBidChannel in ['Online', 'Floor']) &&
+        data.status in ['Live', 'Queued', 'Sold', 'Passed In'] &&
+        isStr(data.vetCertRef, 2, 60) &&
+        isStr(data.farmOrigin, 2, 160) &&
+        isStr(data.country, 2, 80) &&
+        isBoundedStrList(data.images, 10, 1000) &&
+        isStr(data.notes, 0, 1200) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAuctionBid(data) {
+      return data.keys().hasAll([
+          'id', 'lotId', 'auctionId', 'bidderId', 'bidderName',
+          'paddleNumber', 'channel', 'amountUsd', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'lotId', 'auctionId', 'bidderId', 'bidderName',
+          'paddleNumber', 'channel', 'amountUsd', 'maxProxyUsd', 'createdAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.lotId) &&
+        isValidId(data.auctionId) &&
+        isValidId(data.bidderId) &&
+        isStr(data.bidderName, 2, 120) &&
+        isStr(data.paddleNumber, 2, 32) &&
+        data.channel in ['Online', 'Floor'] &&
+        data.amountUsd is number && data.amountUsd > 0 && data.amountUsd <= 100000000 &&
+        (!('maxProxyUsd' in data) || (data.maxProxyUsd is number && data.maxProxyUsd >= data.amountUsd && data.maxProxyUsd <= 100000000)) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidAgriProduct(data) {
+      return data.keys().hasAll([
+          'id', 'sku', 'name', 'category', 'brand', 'priceUsd', 'unitLabel',
+          'stockQty', 'vetApproved', 'subscriptionEligible', 'countryAvailability',
+          'description', 'image', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'sku', 'name', 'category', 'brand', 'priceUsd', 'unitLabel',
+          'stockQty', 'vetApproved', 'subscriptionEligible', 'subscriptionDiscountPct',
+          'countryAvailability', 'description', 'image', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidRef(data.sku) &&
+        isStr(data.name, 3, 160) &&
+        data.category in ['Veterinary & Vaccines', 'Traceability & Ear Tags', 'Nutrition & Minerals', 'Ranch Equipment'] &&
+        isStr(data.brand, 2, 100) &&
+        data.priceUsd is number && data.priceUsd > 0 && data.priceUsd <= 1000000 &&
+        isStr(data.unitLabel, 2, 60) &&
+        data.stockQty is number && data.stockQty >= 0 && data.stockQty <= 1000000 &&
+        data.vetApproved is bool &&
+        data.subscriptionEligible is bool &&
+        (!('subscriptionDiscountPct' in data) || (data.subscriptionDiscountPct is number && data.subscriptionDiscountPct >= 0 && data.subscriptionDiscountPct <= 50)) &&
+        isStr(data.countryAvailability, 2, 120) &&
+        isStr(data.description, 2, 1200) &&
+        isStr(data.image, 0, 1000) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidProductOrder(data) {
+      return data.keys().hasAll([
+          'id', 'reference', 'buyerId', 'buyerName', 'country', 'deliveryAddress',
+          'items', 'totalUsd', 'paymentMode', 'status', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'reference', 'buyerId', 'buyerName', 'country', 'deliveryAddress',
+          'items', 'totalUsd', 'paymentMode', 'status', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidRef(data.reference) &&
+        isValidId(data.buyerId) &&
+        isStr(data.buyerName, 2, 120) &&
+        isStr(data.country, 2, 80) &&
+        isStr(data.deliveryAddress, 4, 260) &&
+        data.items is list && data.items.size() >= 1 && data.items.size() <= 30 && data.items[0] is map &&
+        data.totalUsd is number && data.totalUsd > 0 && data.totalUsd <= 10000000 &&
+        isStr(data.paymentMode, 2, 120) &&
+        data.status in ['Pending', 'Confirmed', 'Dispatched', 'Delivered', 'Cancelled'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUserSubscription(data) {
+      return data.keys().hasAll([
+          'id', 'userId', 'userName', 'planId', 'planName', 'tier',
+          'billingCycle', 'amountUsd', 'status', 'startedAt', 'renewsAt',
+          'paymentMode', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'userId', 'userName', 'planId', 'planName', 'tier',
+          'billingCycle', 'amountUsd', 'status', 'startedAt', 'renewsAt',
+          'paymentMode', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        isValidId(data.userId) &&
+        isStr(data.userName, 2, 120) &&
+        isStr(data.planId, 2, 80) &&
+        isStr(data.planName, 2, 140) &&
+        data.tier in ['buyer_pro', 'rancher_pro', 'vet_supplies_box', 'enterprise_auction'] &&
+        data.billingCycle in ['monthly', 'annual'] &&
+        data.amountUsd is number && data.amountUsd > 0 && data.amountUsd <= 100000 &&
+        data.status in ['active', 'paused', 'cancelled'] &&
+        isStr(data.startedAt, 4, 64) &&
+        isStr(data.renewsAt, 4, 64) &&
+        isStr(data.paymentMode, 2, 120) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // =========================================================================
+    // 1. /admins/{userId} — Trusted Admin Registry
+    // =========================================================================
+    match /admins/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isBootstrapAdmin();
+      allow create: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidAdminRecord(incoming()) &&
+        incoming().uid == userId &&
+        incoming().createdAt == request.time &&
+        isAdmin();
+      allow update: if false;
+      allow delete: if isValidId(userId) && isBootstrapAdmin();
+    }
+
+    // =========================================================================
+    // 2. /users/{userId} — PII-Isolated Private Accounts
+    // =========================================================================
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isBootstrapAdmin();
+      allow create: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUserAccount(incoming()) &&
+        incoming().id == userId &&
+        incoming().uid == userId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (
+            isOwner(userId) &&
+            isNonAdminRole(incoming().role) &&
+            incoming().status == 'active' &&
+            incoming().verified == (incoming().role == 'buyer') &&
+            incoming().reviewCount == 0
+          )
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUserAccount(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          // Action: Admin account moderation
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'status', 'verified', 'role', 'name', 'organization', 'phone',
+            'country', 'province', 'district', 'meta', 'rating', 'reviewCount',
+            'savedListingIds', 'recentlyViewedIds', 'compareListingIds', 'updatedAt'
+          ])) ||
+          // Action: Owner profile & preferences update (RBAC fields strictly locked)
+          (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'organization', 'phone', 'country', 'province', 'district',
+            'meta', 'savedListingIds', 'recentlyViewedIds', 'compareListingIds', 'updatedAt'
+          ]))
+        );
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 3. /publicProfiles/{userId} — Non-PII Marketplace Directory
+    // =========================================================================
+    match /publicProfiles/{userId} {
+      allow get: if isValidId(userId) && (existing().status == 'active' || isOwner(userId) || isAdmin());
+      allow list: if resource.data.status == 'active' || isBootstrapAdmin();
+      allow create: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidPublicProfile(incoming()) &&
+        incoming().id == userId &&
+        incoming().uid == userId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (
+            isOwner(userId) &&
+            isNonAdminRole(incoming().role) &&
+            incoming().status == 'active' &&
+            incoming().verified == (incoming().role == 'buyer') &&
+            incoming().reviewCount == 0
+          )
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidPublicProfile(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          // Action: Admin moderation sync
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'status', 'verified', 'role', 'name', 'organization', 'country',
+            'province', 'district', 'rating', 'reviewCount', 'updatedAt'
+          ])) ||
+          // Action: Owner public display info update
+          (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'organization', 'country', 'province', 'district', 'updatedAt'
+          ]))
+        );
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 4. /listings/{listingId} — Livestock Marketplace Catalog
+    // =========================================================================
+    match /listings/{listingId} {
+      allow get: if isValidId(listingId) && (
+        existing().status == 'active' ||
+        (isSignedIn() && existing().sellerId == request.auth.uid) ||
+        isAdmin() ||
+        hasTrustedRole('agent')
+      );
+      allow list: if resource.data.status == 'active' ||
+        (isSignedIn() && resource.data.sellerId == request.auth.uid) ||
+        isBootstrapAdmin();
+      allow create: if isVerifiedUser() &&
+        isValidId(listingId) &&
+        isValidListing(incoming()) &&
+        incoming().id == listingId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (
+            incoming().sellerId == request.auth.uid &&
+            incoming().verificationStatus in ['Pending Verification', 'Unverified'] &&
+            !('verificationReport' in incoming())
+          )
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(listingId) &&
+        isValidListing(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().sellerId == existing().sellerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          // Action: Admin moderation or verification override
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'breed', 'priceUsd', 'quantity', 'weightKg', 'description',
+            'vaccinationSummary', 'feedingRegime', 'status', 'verificationStatus',
+            'verificationReport', 'featured', 'views', 'updatedAt'
+          ])) ||
+          // Action: Seller edit listing details (terminal sold/archived locked)
+          (existing().sellerId == request.auth.uid &&
+            !(existing().status in ['sold', 'archived']) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'breed', 'priceUsd', 'quantity', 'weightKg', 'description',
+              'vaccinationSummary', 'feedingRegime', 'status', 'updatedAt'
+            ])) ||
+          // Action: Field Agent inspection report submission
+          (hasTrustedRole('agent') &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'verificationStatus', 'verificationReport', 'weightKg', 'quantity', 'updatedAt'
+            ])) ||
+          // Action: Buyer inspection scheduling request
+          (existing().status == 'active' &&
+            existing().verificationStatus != 'Verified' &&
+            incoming().verificationStatus == 'Inspection Scheduled' &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'verificationStatus', 'updatedAt'
+            ])) ||
+          // Action: Authenticated listing view increment (+1 only)
+          (existing().status == 'active' &&
+            incoming().views == existing().views + 1 &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['views', 'updatedAt']))
+        );
+      allow delete: if isValidId(listingId) && (
+        isAdmin() ||
+        (isVerifiedUser() && existing().sellerId == request.auth.uid && existing().status == 'draft')
+      );
+    }
+
+    // =========================================================================
+    // 5. /offers/{offerId} — Structured Negotiations
+    // =========================================================================
+    match /offers/{offerId} {
+      allow get: if isValidId(offerId) && isSignedIn() && (
+        existing().buyerId == request.auth.uid ||
+        existing().sellerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.buyerId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid ||
+        isBootstrapAdmin()
+      );
+      allow create: if isVerifiedUser() &&
+        isValidId(offerId) &&
+        isValidOffer(incoming()) &&
+        incoming().id == offerId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/listings/$(incoming().listingId)) &&
+        (
+          isAdmin() ||
+          (
+            incoming().buyerId == request.auth.uid &&
+            incoming().sellerId == get(/databases/$(database)/documents/listings/$(incoming().listingId)).data.sellerId &&
+            incoming().status == 'pending' &&
+            incoming().lastActorRole == 'buyer'
+          )
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(offerId) &&
+        isValidOffer(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().listingId == existing().listingId &&
+        incoming().buyerId == existing().buyerId &&
+        incoming().sellerId == existing().sellerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          // Action: Admin override
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'currentAmountUsd', 'quantity', 'status', 'lastActorRole', 'history', 'updatedAt'
+          ])) ||
+          // Action: Counter-offer / Accept / Reject by buyer or seller (non-terminal only)
+          ((existing().buyerId == request.auth.uid || existing().sellerId == request.auth.uid) &&
+            !(existing().status in ['rejected', 'expired', 'converted']) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'currentAmountUsd', 'quantity', 'status', 'lastActorRole', 'history', 'updatedAt'
+            ])) ||
+          // Action: Convert accepted offer into transaction
+          ((existing().buyerId == request.auth.uid || existing().sellerId == request.auth.uid) &&
+            existing().status == 'accepted' &&
+            incoming().status == 'converted' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+        );
+      allow delete: if isValidId(offerId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 6. /transactions/{transactionId} — Verified Milestone Trades
+    // =========================================================================
+    match /transactions/{transactionId} {
+      allow get: if isValidId(transactionId) && isSignedIn() && (
+        existing().buyerId == request.auth.uid ||
+        existing().sellerId == request.auth.uid ||
+        isAdmin() ||
+        hasTrustedRole('centre') ||
+        hasTrustedRole('transport')
+      );
+      allow list: if isSignedIn() && (
+        resource.data.buyerId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid ||
+        isBootstrapAdmin()
+      );
+      allow create: if isVerifiedUser() &&
+        isValidId(transactionId) &&
+        isValidTransaction(incoming()) &&
+        incoming().id == transactionId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/listings/$(incoming().listingId)) &&
+        (
+          isAdmin() ||
+          (
+            exists(/databases/$(database)/documents/offers/$(incoming().offerId)) &&
+            get(/databases/$(database)/documents/offers/$(incoming().offerId)).data.status == 'accepted' &&
+            incoming().buyerId == get(/databases/$(database)/documents/offers/$(incoming().offerId)).data.buyerId &&
+            incoming().sellerId == get(/databases/$(database)/documents/offers/$(incoming().offerId)).data.sellerId &&
+            incoming().agreedAmountUsd == get(/databases/$(database)/documents/offers/$(incoming().offerId)).data.currentAmountUsd &&
+            (incoming().buyerId == request.auth.uid || incoming().sellerId == request.auth.uid)
+          )
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(transactionId) &&
+        isValidTransaction(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().offerId == existing().offerId &&
+        incoming().listingId == existing().listingId &&
+        incoming().buyerId == existing().buyerId &&
+        incoming().sellerId == existing().sellerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          // Action: Admin override
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'state', 'paymentStatus', 'timeline', 'documents', 'transportJobId', 'hasReview', 'updatedAt'
+          ])) ||
+          // Action: Buyer or Seller milestone progression (non-terminal only)
+          ((existing().buyerId == request.auth.uid || existing().sellerId == request.auth.uid) &&
+            !(existing().state in ['Completed', 'Cancelled']) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'state', 'paymentStatus', 'timeline', 'updatedAt'
+            ])) ||
+          // Action: Collection Centre handover initiation
+          (hasTrustedRole('centre') &&
+            !(existing().state in ['Completed', 'Cancelled']) &&
+            incoming().state == 'Handover initiated' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['state', 'timeline', 'updatedAt'])) ||
+          // Action: Transport Partner handover verification on delivery
+          (hasTrustedRole('transport') &&
+            !(existing().state in ['Completed', 'Cancelled']) &&
+            incoming().state == 'Handover verified' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['state', 'timeline', 'updatedAt'])) ||
+          // Action: Buyer marks transaction as reviewed after completion
+          (existing().buyerId == request.auth.uid &&
+            incoming().hasReview == true &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['hasReview', 'updatedAt']))
+        );
+      allow delete: if isValidId(transactionId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 7. /fieldTasks/{taskId} — Field Agent Inspections
+    // =========================================================================
+    match /fieldTasks/{taskId} {
+      allow get: if isValidId(taskId) && isSignedIn() && (
+        existing().assignedAgentId == request.auth.uid ||
+        existing().sellerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.assignedAgentId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid ||
+        isBootstrapAdmin()
+      );
+      allow create: if isVerifiedUser() &&
+        isValidId(taskId) &&
+        isValidFieldTask(incoming()) &&
+        incoming().id == taskId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/listings/$(incoming().listingId)) &&
+        (
+          isAdmin() ||
+          (
+            incoming().status == 'Assigned' &&
+            incoming().sellerId == get(/databases/$(database)/documents/listings/$(incoming().listingId)).data.sellerId &&
+            (
+              incoming().sellerId == request.auth.uid ||
+              get(/databases/$(database)/documents/listings/$(incoming().listingId)).data.status == 'active'
+            )
+          )
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(taskId) &&
+        isValidFieldTask(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().listingId == existing().listingId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          // Action: Admin reassignment or override
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'assignedAgentId', 'assignedAgentName', 'priority', 'status', 'scheduledDate', 'updatedAt'
+          ])) ||
+          // Action: Assigned Field Agent status progression (non-terminal only)
+          (existing().assignedAgentId == request.auth.uid &&
+            existing().status != 'Completed' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+        );
+      allow delete: if isValidId(taskId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 8. /centreRecords/{recordId} — Collection Centre Intake & Release
+    // =========================================================================
+    match /centreRecords/{recordId} {
+      allow get: if isValidId(recordId) && isSignedIn() && (
+        existing().operatorId == request.auth.uid ||
+        existing().buyerId == request.auth.uid ||
+        existing().sellerId == request.auth.uid ||
+        isAdmin() ||
+        hasTrustedRole('centre')
+      );
+      allow list: if isSignedIn() && (
+        resource.data.operatorId == request.auth.uid ||
+        resource.data.buyerId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid ||
+        isBootstrapAdmin()
+      );
+      allow create: if isVerifiedUser() &&
+        isValidId(recordId) &&
+        isValidCentreRecord(incoming()) &&
+        incoming().id == recordId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          incoming().operatorId == request.auth.uid ||
+          incoming().buyerId == request.auth.uid ||
+          incoming().sellerId == request.auth.uid
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(recordId) &&
+        isValidCentreRecord(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          // Action: Admin override
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'penNumber', 'checkedWeightAvgKg', 'status', 'checkedInAt', 'releasedAt', 'notes', 'updatedAt'
+          ])) ||
+          // Action: Centre operator updates intake/weigh/release (non-terminal only)
+          ((existing().operatorId == request.auth.uid || hasTrustedRole('centre')) &&
+            existing().status != 'Released' &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'penNumber', 'checkedWeightAvgKg', 'status', 'checkedInAt', 'releasedAt', 'notes', 'updatedAt'
+            ]))
+        );
+      allow delete: if isValidId(recordId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 9. /transportJobs/{jobId} — Livestock Haulage Corridors
+    // =========================================================================
+    match /transportJobs/{jobId} {
+      allow get: if isValidId(jobId) && isSignedIn() && (
+        existing().status == 'Available' ||
+        existing().assignedPartnerId == request.auth.uid ||
+        existing().buyerId == request.auth.uid ||
+        existing().sellerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.status == 'Available' ||
+        resource.data.assignedPartnerId == request.auth.uid ||
+        resource.data.buyerId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid ||
+        isBootstrapAdmin()
+      );
+      allow create: if isVerifiedUser() &&
+        isValidId(jobId) &&
+        isValidTransportJob(incoming()) &&
+        incoming().id == jobId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          incoming().buyerId == request.auth.uid ||
+          incoming().sellerId == request.auth.uid
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(jobId) &&
+        isValidTransportJob(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().transactionId == existing().transactionId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          // Action: Admin override
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'status', 'assignedPartnerId', 'assignedDriver', 'assignedVehicle',
+            'podRecipient', 'podCode', 'podDeliveredAt', 'podConditionNotes', 'updatedAt'
+          ])) ||
+          // Action: Transport Partner accepts an Available job
+          (hasTrustedRole('transport') &&
+            existing().status == 'Available' &&
+            incoming().status == 'Accepted' &&
+            incoming().assignedPartnerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'status', 'assignedPartnerId', 'assignedDriver', 'assignedVehicle', 'updatedAt'
+            ])) ||
+          // Action: Assigned Transport Partner updates transit / POD (non-terminal only)
+          (existing().assignedPartnerId == request.auth.uid &&
+            existing().status != 'Delivered' &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'status', 'podRecipient', 'podCode', 'podDeliveredAt', 'podConditionNotes', 'updatedAt'
+            ]))
+        );
+      allow delete: if isValidId(jobId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 10. /vehicles/{vehicleId} — Carrier Fleet Registry
+    // =========================================================================
+    match /vehicles/{vehicleId} {
+      allow get: if isValidId(vehicleId) && isSignedIn() && (
+        existing().partnerId == request.auth.uid || isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.partnerId == request.auth.uid || isBootstrapAdmin()
+      );
+      allow create: if isVerifiedUser() &&
+        isValidId(vehicleId) &&
+        isValidVehicle(incoming()) &&
+        incoming().id == vehicleId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (isAdmin() || incoming().partnerId == request.auth.uid);
+      allow update: if isVerifiedUser() &&
+        isValidId(vehicleId) &&
+        isValidVehicle(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().partnerId == existing().partnerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          // Action: Admin override
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'model', 'capacityHead', 'suitableFor', 'driverName', 'driverPhone', 'status', 'updatedAt'
+          ])) ||
+          // Action: Fleet owner updates vehicle details
+          (existing().partnerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'model', 'capacityHead', 'suitableFor', 'driverName', 'driverPhone', 'status', 'updatedAt'
+            ]))
+        );
+      allow delete: if isValidId(vehicleId) && (
+        isAdmin() || (isVerifiedUser() && existing().partnerId == request.auth.uid)
+      );
+    }
+
+    // =========================================================================
+    // 11. /conversations/{conversationId} + /messages/{messageId} (Master Gate)
+    // =========================================================================
+    match /conversations/{conversationId} {
+      allow get: if isValidId(conversationId) && isSignedIn() && (
+        request.auth.uid in existing().participantIds || isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        request.auth.uid in resource.data.participantIds || isBootstrapAdmin()
+      );
+      allow create: if isVerifiedUser() &&
+        isValidId(conversationId) &&
+        isValidConversation(incoming()) &&
+        incoming().id == conversationId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (isAdmin() || request.auth.uid in incoming().participantIds);
+      allow update: if isVerifiedUser() &&
+        isValidId(conversationId) &&
+        isValidConversation(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().participantIds == existing().participantIds &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['updatedAt'])) ||
+          (request.auth.uid in existing().participantIds &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['updatedAt']))
+        );
+      allow delete: if isValidId(conversationId) && isAdmin();
+
+      // PILLAR 1 MASTER GATE (get() on parent for get/create/update) + PILLAR 8 (zero get() in list)
+      match /messages/{messageId} {
+        allow get: if isValidId(conversationId) && isValidId(messageId) && isSignedIn() && (
+          isAdmin() ||
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds
+        );
+        allow list: if isSignedIn() && (
+          request.auth.uid in resource.data.participantIds ||
+          isBootstrapAdmin()
+        );
+        allow create: if isVerifiedUser() &&
+          isValidId(conversationId) &&
+          isValidId(messageId) &&
+          isValidMessage(incoming()) &&
+          incoming().id == messageId &&
+          incoming().createdAt == request.time &&
+          exists(/databases/$(database)/documents/conversations/$(conversationId)) &&
+          incoming().participantIds == get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds &&
+          (
+            isAdmin() ||
+            (
+              incoming().senderId == request.auth.uid &&
+              request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds
+            )
+          );
+        allow update: if isVerifiedUser() &&
+          isValidId(conversationId) &&
+          isValidId(messageId) &&
+          isValidMessage(incoming()) &&
+          incoming().id == existing().id &&
+          incoming().senderId == existing().senderId &&
+          incoming().participantIds == existing().participantIds &&
+          incoming().createdAt == existing().createdAt &&
+          (
+            (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['read'])) ||
+            (
+              request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['read'])
+            )
+          );
+        allow delete: if isValidId(conversationId) && isValidId(messageId) && isAdmin();
+      }
+    }
+
+    // =========================================================================
+    // 12. /notifications/{notificationId} — Targeted Alerts
+    // =========================================================================
+    match /notifications/{notificationId} {
+      allow get: if isValidId(notificationId) && isSignedIn() && (
+        existing().recipientUserId == request.auth.uid ||
+        existing().recipientRole == 'all' ||
+        isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.recipientUserId == request.auth.uid ||
+        resource.data.recipientRole == 'all' ||
+        isBootstrapAdmin()
+      );
+      allow create: if isVerifiedUser() &&
+        isValidId(notificationId) &&
+        isValidNotification(incoming()) &&
+        incoming().id == notificationId &&
+        incoming().createdAt == request.time &&
+        (
+          isAdmin() ||
+          (incoming().recipientRole != 'all' && incoming().read == false)
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(notificationId) &&
+        isValidNotification(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt &&
+        (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['read'])) ||
+          ((existing().recipientUserId == request.auth.uid || existing().recipientRole == 'all') &&
+            incoming().read == true &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['read']))
+        );
+      allow delete: if isValidId(notificationId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 13. /reviews/{reviewId} — Verified Seller Reviews (Non-PII Public)
+    // =========================================================================
+    match /reviews/{reviewId} {
+      allow get: if isValidId(reviewId) && existing().rating >= 1 && existing().rating <= 5;
+      allow list: if resource.data.rating >= 1 && resource.data.rating <= 5;
+      allow create: if isVerifiedUser() &&
+        isValidId(reviewId) &&
+        isValidReview(incoming()) &&
+        incoming().id == reviewId &&
+        incoming().createdAt == request.time &&
+        exists(/databases/$(database)/documents/transactions/$(incoming().transactionId)) &&
+        (
+          isAdmin() ||
+          (
+            incoming().buyerId == request.auth.uid &&
+            incoming().sellerId == get(/databases/$(database)/documents/transactions/$(incoming().transactionId)).data.sellerId &&
+            get(/databases/$(database)/documents/transactions/$(incoming().transactionId)).data.buyerId == request.auth.uid
+          )
+        );
+      allow update: if false;
+      allow delete: if isValidId(reviewId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 14. /disputes/{disputeId} — Escalated Trade Disputes
+    // =========================================================================
+    match /disputes/{disputeId} {
+      allow get: if isValidId(disputeId) && isSignedIn() && (
+        existing().openedById == request.auth.uid ||
+        existing().buyerId == request.auth.uid ||
+        existing().sellerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.openedById == request.auth.uid ||
+        resource.data.buyerId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid ||
+        isBootstrapAdmin()
+      );
+      allow create: if isVerifiedUser() &&
+        isValidId(disputeId) &&
+        isValidDispute(incoming()) &&
+        incoming().id == disputeId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        exists(/databases/$(database)/documents/transactions/$(incoming().transactionId)) &&
+        (
+          isAdmin() ||
+          (
+            incoming().openedById == request.auth.uid &&
+            incoming().status == 'Open' &&
+            incoming().buyerId == get(/databases/$(database)/documents/transactions/$(incoming().transactionId)).data.buyerId &&
+            incoming().sellerId == get(/databases/$(database)/documents/transactions/$(incoming().transactionId)).data.sellerId &&
+            (incoming().buyerId == request.auth.uid || incoming().sellerId == request.auth.uid)
+          )
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(disputeId) &&
+        isValidDispute(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().transactionId == existing().transactionId &&
+        incoming().openedById == existing().openedById &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        isAdmin() &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'resolution', 'updatedAt']);
+      allow delete: if isValidId(disputeId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 15. /auditLogs/{logId} — Immutable Operational Audit Trail
+    // =========================================================================
+    match /auditLogs/{logId} {
+      allow get: if isValidId(logId) && isAdmin();
+      allow list: if isBootstrapAdmin();
+      allow create: if isVerifiedUser() &&
+        isValidId(logId) &&
+        isValidAuditLog(incoming()) &&
+        incoming().id == logId &&
+        incoming().createdAt == request.time &&
+        (isAdmin() || incoming().actorId == request.auth.uid);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // =========================================================================
+    // 16. /auctionCenters/{centerId} — Physical Auction Sale Yards
+    // =========================================================================
+    match /auctionCenters/{centerId} {
+      allow get: if isValidId(centerId) && (
+        existing().status in ['Active', 'Upcoming Sale', 'Maintenance'] || isAdmin()
+      );
+      allow list: if resource.data.status in ['Active', 'Upcoming Sale', 'Maintenance'] || isBootstrapAdmin();
+      allow create: if isVerifiedUser() &&
+        isValidId(centerId) &&
+        isValidAuctionCenter(incoming()) &&
+        incoming().id == centerId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        isAdmin();
+      allow update: if isVerifiedUser() &&
+        isValidId(centerId) &&
+        isValidAuctionCenter(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        isAdmin() &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'address', 'penCapacityHead', 'weighbridgeCertified', 'vetAuthority',
+          'ringManager', 'nextSaleDate', 'status', 'facilities', 'image', 'updatedAt'
+        ]);
+      allow delete: if isValidId(centerId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 17. /auctions/{auctionId} — Hybrid Physical + Online Auction Schedule
+    // =========================================================================
+    match /auctions/{auctionId} {
+      allow get: if isValidId(auctionId) && (
+        existing().status in ['Live Now', 'Upcoming', 'Completed'] || isAdmin()
+      );
+      allow list: if resource.data.status in ['Live Now', 'Upcoming', 'Completed'] || isBootstrapAdmin();
+      allow create: if isVerifiedUser() &&
+        isValidId(auctionId) &&
+        isValidAuctionEvent(incoming()) &&
+        incoming().id == auctionId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        isAdmin();
+      allow update: if isVerifiedUser() &&
+        isValidId(auctionId) &&
+        isValidAuctionEvent(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          // Action: Admin auction management
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'status', 'startsAt', 'endsAt', 'totalLots', 'registeredBidders', 'catalogNotes', 'updatedAt'
+          ])) ||
+          // Action: Verified buyer paddle registration (+1 bidder count, non-completed only)
+          (existing().status != 'Completed' &&
+            incoming().registeredBidders == existing().registeredBidders + 1 &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['registeredBidders', 'updatedAt']))
+        );
+      allow delete: if isValidId(auctionId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 18. /auctionLots/{lotId} + /bids/{bidId} — Simultaneous Floor + Online Ring
+    // =========================================================================
+    match /auctionLots/{lotId} {
+      allow get: if isValidId(lotId) && (
+        existing().status in ['Live', 'Queued', 'Sold', 'Passed In'] || isAdmin()
+      );
+      allow list: if resource.data.status in ['Live', 'Queued', 'Sold', 'Passed In'] || isBootstrapAdmin();
+      allow create: if isVerifiedUser() &&
+        isValidId(lotId) &&
+        isValidAuctionLot(incoming()) &&
+        incoming().id == lotId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        isAdmin();
+      allow update: if isVerifiedUser() &&
+        isValidId(lotId) &&
+        isValidAuctionLot(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().auctionId == existing().auctionId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          // Action: Admin / Auctioneer ring controls (floor bids, open lot, hammer Sold / Passed In)
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'status', 'currentBidUsd', 'bidCount', 'highestBidderId', 'highestBidderName',
+            'highestBidderPaddle', 'highestBidChannel', 'reservePriceUsd', 'bidIncrementUsd',
+            'notes', 'updatedAt'
+          ])) ||
+          // Action: Verified Online Bidder placing valid increment bid on a Live lot
+          (existing().status == 'Live' &&
+            incoming().status == 'Live' &&
+            incoming().highestBidderId == request.auth.uid &&
+            incoming().highestBidChannel == 'Online' &&
+            incoming().currentBidUsd >= existing().currentBidUsd + existing().bidIncrementUsd &&
+            incoming().bidCount == existing().bidCount + 1 &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'currentBidUsd', 'bidCount', 'highestBidderId', 'highestBidderName',
+              'highestBidderPaddle', 'highestBidChannel', 'updatedAt'
+            ]))
+        );
+      allow delete: if isValidId(lotId) && isAdmin();
+
+      // Master Gate on parent lot (zero get() in list)
+      match /bids/{bidId} {
+        allow get: if isValidId(lotId) && isValidId(bidId) &&
+          exists(/databases/$(database)/documents/auctionLots/$(lotId)) &&
+          existing().amountUsd > 0;
+        allow list: if resource.data.amountUsd > 0 || isBootstrapAdmin();
+        allow create: if isVerifiedUser() &&
+          isValidId(lotId) &&
+          isValidId(bidId) &&
+          isValidAuctionBid(incoming()) &&
+          incoming().id == bidId &&
+          incoming().lotId == lotId &&
+          incoming().createdAt == request.time &&
+          exists(/databases/$(database)/documents/auctionLots/$(lotId)) &&
+          (
+            isAdmin() ||
+            (
+              get(/databases/$(database)/documents/auctionLots/$(lotId)).data.status == 'Live' &&
+              incoming().auctionId == get(/databases/$(database)/documents/auctionLots/$(lotId)).data.auctionId &&
+              incoming().bidderId == request.auth.uid &&
+              incoming().channel == 'Online' &&
+              incoming().amountUsd >= get(/databases/$(database)/documents/auctionLots/$(lotId)).data.currentBidUsd +
+                get(/databases/$(database)/documents/auctionLots/$(lotId)).data.bidIncrementUsd
+            )
+          );
+        allow update: if false;
+        allow delete: if isValidId(lotId) && isValidId(bidId) && isAdmin();
+      }
+    }
+
+    // =========================================================================
+    // 19. /products/{productId} — Agri-Vet & Ranch Supplies Online Catalog
+    // =========================================================================
+    match /products/{productId} {
+      allow get: if isValidId(productId) && (existing().priceUsd > 0 || isAdmin());
+      allow list: if resource.data.priceUsd > 0 || isBootstrapAdmin();
+      allow create: if isVerifiedUser() &&
+        isValidId(productId) &&
+        isValidAgriProduct(incoming()) &&
+        incoming().id == productId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        isAdmin();
+      allow update: if isVerifiedUser() &&
+        isValidId(productId) &&
+        isValidAgriProduct(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        isAdmin() &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'priceUsd', 'stockQty', 'vetApproved', 'subscriptionEligible',
+          'subscriptionDiscountPct', 'description', 'updatedAt'
+        ]);
+      allow delete: if isValidId(productId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 20. /productOrders/{orderId} — Agri-Vet Online Store Orders
+    // =========================================================================
+    match /productOrders/{orderId} {
+      allow get: if isValidId(orderId) && isSignedIn() && (
+        existing().buyerId == request.auth.uid || isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.buyerId == request.auth.uid || isBootstrapAdmin()
+      );
+      allow create: if isVerifiedUser() &&
+        isValidId(orderId) &&
+        isValidProductOrder(incoming()) &&
+        incoming().id == orderId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (incoming().buyerId == request.auth.uid && incoming().status == 'Confirmed')
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(orderId) &&
+        isValidProductOrder(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().buyerId == existing().buyerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'status', 'deliveryAddress', 'updatedAt'
+          ])) ||
+          (existing().buyerId == request.auth.uid &&
+            !(existing().status in ['Dispatched', 'Delivered', 'Cancelled']) &&
+            incoming().status == 'Cancelled' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+        );
+      allow delete: if isValidId(orderId) && isAdmin();
+    }
+
+    // =========================================================================
+    // 21. /subscriptions/{subscriptionId} — MARIKETI Recurring Memberships
+    // =========================================================================
+    match /subscriptions/{subscriptionId} {
+      allow get: if isValidId(subscriptionId) && isSignedIn() && (
+        existing().userId == request.auth.uid || isAdmin()
+      );
+      allow list: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || isBootstrapAdmin()
+      );
+      allow create: if isVerifiedUser() &&
+        isValidId(subscriptionId) &&
+        isValidUserSubscription(incoming()) &&
+        incoming().id == subscriptionId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (incoming().userId == request.auth.uid &&
+            subscriptionId == request.auth.uid &&
+            incoming().status == 'active')
+        );
+      allow update: if isVerifiedUser() &&
+        isValidId(subscriptionId) &&
+        isValidUserSubscription(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'planId', 'planName', 'tier', 'billingCycle', 'amountUsd', 'status',
+            'startedAt', 'renewsAt', 'updatedAt'
+          ])) ||
+          (existing().userId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'planId', 'planName', 'tier', 'billingCycle', 'amountUsd', 'status',
+              'startedAt', 'renewsAt', 'updatedAt'
+            ]))
+        );
+      allow delete: if isValidId(subscriptionId) && isAdmin();
+    }
+  }
+}

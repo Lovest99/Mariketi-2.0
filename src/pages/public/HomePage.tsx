@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import {
   ArrowRight,
+  Building2,
   ChevronDown,
+  Gavel,
   Search,
   ShieldCheck,
+  ShoppingBag,
   Check,
   MapPin,
   FileCheck2,
@@ -14,6 +17,8 @@ import {
   AFRICAN_REGION_SUMMARY,
   ASSET_IMAGES,
   cn,
+  formatUSD,
+  getCountryFlag,
   getCountryRegion,
 } from '../../lib/utils';
 import type { AfricanRegion, LivestockCategory } from '../../types/mariketi';
@@ -98,6 +103,10 @@ const FAQS = [
 export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
   const {
     listings,
+    auctions,
+    auctionCenters,
+    auctionLots,
+    products,
     savedListingIds,
     compareListingIds,
     navigatePublic,
@@ -106,6 +115,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
     toggleCompareListing,
     loginAsRole,
   } = useMariketi();
+
+  const liveAuction = auctions.find((a) => a.status === 'Live Now') || auctions[0];
+  const liveLot =
+    auctionLots.find((l) => l.auctionId === liveAuction?.id && l.status === 'Live') ||
+    auctionLots[0];
 
   const [heroQuery, setHeroQuery] = useState('');
   const [heroCountry, setHeroCountry] = useState('');
@@ -159,6 +173,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
               >
                 Explore Livestock
                 <ArrowRight className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="inverted"
+                size="lg"
+                onClick={() => navigatePublic('auctions')}
+              >
+                <Gavel className="w-4 h-4" />
+                Live Hybrid Auctions
               </Button>
               <Button
                 variant="inverted"
@@ -271,6 +293,102 @@ export const HomePage: React.FC<HomePageProps> = ({ onSearchMarketplace }) => {
               onToggleCompare={toggleCompareListing}
             />
           ))}
+        </div>
+      </section>
+
+      {/* Hybrid Physical + Online Auctions & Agri-Vet Commerce Band */}
+      <section className="max-w-[1280px] mx-auto px-4 sm:px-6 pb-10 lg:pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+          {/* Live Hybrid Auction Spotlight (7 cols) */}
+          <div className="lg:col-span-7 surface-navy-editorial text-white rounded-xl overflow-hidden border border-[#10243A] shadow-[0_12px_30px_rgba(7,19,32,0.16)] flex flex-col justify-between">
+            <div className="grid grid-cols-1 sm:grid-cols-12 h-full">
+              <div className="sm:col-span-5 relative min-h-[210px] bg-[#071320]">
+                <SafeImage
+                  src={ASSET_IMAGES.auctionRing}
+                  alt="MARIKETI Hybrid Physical and Online Livestock Auction Ring"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-3 left-3 bg-[#071320]/85 text-[#F69B3D] px-2.5 py-1 rounded text-[11px] font-mono font-bold border border-white/15">
+                  HYBRID RING · LIVE
+                </div>
+              </div>
+              <div className="sm:col-span-7 p-5 sm:p-6 flex flex-col justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold text-[#F69B3D] uppercase tracking-wider flex items-center gap-1.5">
+                    <Gavel className="w-3.5 h-3.5" aria-hidden="true" />
+                    Physical Sale Yards + Simultaneous Online Bidding
+                  </p>
+                  <h2 className="mt-1.5 text-xl font-bold text-white leading-snug">
+                    {liveAuction?.title || 'Gwanda Regional Commercial Cattle Sale'}
+                  </h2>
+                  <p className="mt-1.5 text-xs text-slate-300 leading-relaxed">
+                    {liveAuction
+                      ? `${getCountryFlag(liveAuction.country)} ${liveAuction.centerName} · ${liveAuction.totalLots} catalogued lots · ${liveAuction.registeredBidders} registered bidders`
+                      : 'Simultaneous physical ring & online bidding across Zimbabwe and regional sale yards.'}
+                  </p>
+
+                  {liveLot && (
+                    <div className="mt-3.5 pt-3 border-t border-white/15 flex items-baseline justify-between gap-2 text-xs">
+                      <span className="text-slate-300 truncate">
+                        On Block: <strong className="text-white">{liveLot.lotNumber}</strong> ({liveLot.breed}, {liveLot.quantity} hd)
+                      </span>
+                      <span className="font-mono font-bold text-[#F69B3D] text-sm tabular-nums shrink-0">
+                        {formatUSD(liveLot.currentBidUsd)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <Button variant="accent" size="sm" onClick={() => navigatePublic('auctions')}>
+                    Enter Live Hybrid Ring
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                  <span className="text-xs text-slate-300 inline-flex items-center gap-1.5 font-mono tabular-nums">
+                    <Building2 className="w-3.5 h-3.5 text-[#F69B3D]" aria-hidden="true" />
+                    {auctionCenters.length} Physical Centres
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Agri-Vet Store & Subscriptions Spotlight (5 cols) */}
+          <div className="lg:col-span-5 bg-white border border-[#DFE6EE] rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(16,36,58,0.04)] flex flex-col justify-between">
+            <div className="relative h-36 bg-[#071320]">
+              <SafeImage
+                src={ASSET_IMAGES.agriVetSupplies}
+                alt="MARIKETI Agri-Vet vaccines, ear tags, and mineral blocks"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#071320]/80 via-transparent to-transparent" />
+              <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-white text-xs font-semibold">
+                <span className="inline-flex items-center gap-1.5">
+                  <ShoppingBag className="w-3.5 h-3.5 text-[#F69B3D]" aria-hidden="true" />
+                  Agri-Vet Store & Plans
+                </span>
+                <span className="font-mono tabular-nums">{products.length} Vet-Approved SKUs</span>
+              </div>
+            </div>
+
+            <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-[#10243A] leading-snug">
+                  Order ranch supplies online & unlock member subscriptions.
+                </h3>
+                <p className="mt-1.5 text-xs text-[#526071] leading-relaxed">
+                  Cold-chain vaccines, official RFID ear-tag kits, winter mineral licks, and recurring MARIKETI plans with up to 15% store savings and priority auction paddles.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5">
+                <Button variant="primary" size="sm" onClick={() => navigatePublic('store')}>
+                  Shop Supplies & Plans
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

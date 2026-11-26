@@ -1,0 +1,902 @@
+{
+  "entities": {
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Trusted administrator grant document keyed by Firebase Auth UID.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 160 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "createdAt"]
+    },
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "Private user account containing PII and personal preferences, strictly isolated to owner and admins.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "email": { "type": "string", "format": "email", "maxLength": 160 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "role": { "type": "string", "enum": ["buyer", "seller", "agent", "centre", "transport", "admin"] },
+        "organization": { "type": "string", "maxLength": 160 },
+        "country": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "province": { "type": "string", "maxLength": 80 },
+        "district": { "type": "string", "maxLength": 80 },
+        "verified": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["active", "pending", "suspended"] },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "joinedAt": { "type": "string", "maxLength": 64 },
+        "savedListingIds": { "type": "array" },
+        "recentlyViewedIds": { "type": "array" },
+        "compareListingIds": { "type": "array" },
+        "meta": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "uid",
+        "name",
+        "email",
+        "phone",
+        "role",
+        "country",
+        "province",
+        "district",
+        "verified",
+        "status",
+        "rating",
+        "reviewCount",
+        "joinedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PublicProfile": {
+      "title": "PublicProfile",
+      "description": "Non-PII public profile summary for marketplace sellers, agents, centres, and hauliers.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "role": { "type": "string", "enum": ["buyer", "seller", "agent", "centre", "transport", "admin"] },
+        "organization": { "type": "string", "maxLength": 160 },
+        "country": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "province": { "type": "string", "maxLength": 80 },
+        "district": { "type": "string", "maxLength": 80 },
+        "verified": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["active", "pending", "suspended"] },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "joinedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "uid",
+        "name",
+        "role",
+        "country",
+        "province",
+        "district",
+        "verified",
+        "status",
+        "rating",
+        "reviewCount",
+        "joinedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LivestockListing": {
+      "title": "LivestockListing",
+      "description": "Pan-African livestock marketplace listing with verification metadata.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "reference": { "type": "string", "minLength": 3, "maxLength": 40, "pattern": "^[A-Z0-9\\-]+$" },
+        "title": { "type": "string", "minLength": 4, "maxLength": 160 },
+        "category": { "type": "string", "enum": ["Cattle", "Goats", "Sheep", "Pigs", "Poultry", "Other livestock"] },
+        "breed": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "ageMonths": { "type": "number" },
+        "ageLabel": { "type": "string", "maxLength": 60 },
+        "gender": { "type": "string", "enum": ["Bull / Male", "Cow / Female", "Heifer", "Steer / Ox", "Mixed Herd"] },
+        "weightKg": { "type": "number" },
+        "quantity": { "type": "number" },
+        "priceUsd": { "type": "number" },
+        "priceUnit": { "type": "string", "enum": ["per head", "total lot"] },
+        "country": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "province": { "type": "string", "maxLength": 80 },
+        "district": { "type": "string", "maxLength": 80 },
+        "farmName": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "sellerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "sellerName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "sellerRating": { "type": "number" },
+        "sellerVerified": { "type": "boolean" },
+        "verificationStatus": { "type": "string", "enum": ["Verified", "Inspection Scheduled", "Pending Verification", "Unverified"] },
+        "verificationReport": { "type": "object" },
+        "status": { "type": "string", "enum": ["active", "paused", "sold", "archived", "draft"] },
+        "listedAt": { "type": "string", "maxLength": 64 },
+        "images": { "type": "array" },
+        "description": { "type": "string", "maxLength": 2000 },
+        "vaccinationSummary": { "type": "string", "maxLength": 600 },
+        "feedingRegime": { "type": "string", "maxLength": 300 },
+        "featured": { "type": "boolean" },
+        "views": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "reference",
+        "title",
+        "category",
+        "breed",
+        "ageMonths",
+        "ageLabel",
+        "gender",
+        "weightKg",
+        "quantity",
+        "priceUsd",
+        "priceUnit",
+        "country",
+        "province",
+        "district",
+        "farmName",
+        "sellerId",
+        "sellerName",
+        "sellerRating",
+        "sellerVerified",
+        "verificationStatus",
+        "status",
+        "listedAt",
+        "images",
+        "description",
+        "vaccinationSummary",
+        "feedingRegime",
+        "views",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Offer": {
+      "title": "Offer",
+      "description": "Structured livestock purchase offer with bounded negotiation history.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "reference": { "type": "string", "minLength": 3, "maxLength": 40, "pattern": "^[A-Z0-9\\-]+$" },
+        "listingId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "listingTitle": { "type": "string", "maxLength": 160 },
+        "listingRef": { "type": "string", "maxLength": 40 },
+        "buyerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "buyerName": { "type": "string", "maxLength": 120 },
+        "sellerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "sellerName": { "type": "string", "maxLength": 120 },
+        "currentAmountUsd": { "type": "number" },
+        "quantity": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "countered", "accepted", "rejected", "expired", "converted"] },
+        "lastActorRole": { "type": "string", "enum": ["buyer", "seller"] },
+        "expiresAt": { "type": "string", "maxLength": 64 },
+        "history": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "reference",
+        "listingId",
+        "listingTitle",
+        "listingRef",
+        "buyerId",
+        "buyerName",
+        "sellerId",
+        "sellerName",
+        "currentAmountUsd",
+        "quantity",
+        "status",
+        "lastActorRole",
+        "expiresAt",
+        "history",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "End-to-end livestock trade milestone record with handover PIN and audit timeline.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "reference": { "type": "string", "minLength": 3, "maxLength": 40, "pattern": "^[A-Z0-9\\-]+$" },
+        "offerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "listingId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "listingTitle": { "type": "string", "maxLength": 160 },
+        "listingCategory": { "type": "string", "enum": ["Cattle", "Goats", "Sheep", "Pigs", "Poultry", "Other livestock"] },
+        "quantity": { "type": "number" },
+        "buyerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "buyerName": { "type": "string", "maxLength": 120 },
+        "sellerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "sellerName": { "type": "string", "maxLength": 120 },
+        "agreedAmountUsd": { "type": "number" },
+        "state": {
+          "type": "string",
+          "enum": [
+            "Offer accepted",
+            "Initiated",
+            "Awaiting payment",
+            "Payment confirmed",
+            "Collection scheduled",
+            "Delivery scheduled",
+            "Handover initiated",
+            "Handover verified",
+            "Completed",
+            "Disputed",
+            "Cancelled"
+          ]
+        },
+        "paymentMode": { "type": "string", "maxLength": 120 },
+        "paymentStatus": { "type": "string", "enum": ["Unpaid", "Demo Payment Confirmed", "Refunded (Demo)"] },
+        "collectionCentreName": { "type": "string", "maxLength": 180 },
+        "pickupLocation": { "type": "string", "maxLength": 200 },
+        "deliveryLocation": { "type": "string", "maxLength": 200 },
+        "handoverCode": { "type": "string", "maxLength": 32 },
+        "transportJobId": { "type": "string", "maxLength": 128 },
+        "documents": { "type": "array" },
+        "timeline": { "type": "array" },
+        "hasReview": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "reference",
+        "offerId",
+        "listingId",
+        "listingTitle",
+        "listingCategory",
+        "quantity",
+        "buyerId",
+        "buyerName",
+        "sellerId",
+        "sellerName",
+        "agreedAmountUsd",
+        "state",
+        "paymentMode",
+        "paymentStatus",
+        "collectionCentreName",
+        "pickupLocation",
+        "deliveryLocation",
+        "handoverCode",
+        "documents",
+        "timeline",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "FieldInspectionTask": {
+      "title": "FieldInspectionTask",
+      "description": "On-farm livestock inspection assignment for verified field agents.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "reference": { "type": "string", "minLength": 3, "maxLength": 40, "pattern": "^[A-Z0-9\\-]+$" },
+        "listingId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "listingTitle": { "type": "string", "maxLength": 160 },
+        "sellerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "sellerName": { "type": "string", "maxLength": 120 },
+        "sellerPhone": { "type": "string", "maxLength": 40 },
+        "farmName": { "type": "string", "maxLength": 140 },
+        "country": { "type": "string", "maxLength": 80 },
+        "province": { "type": "string", "maxLength": 80 },
+        "district": { "type": "string", "maxLength": 80 },
+        "assignedAgentId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "assignedAgentName": { "type": "string", "maxLength": 120 },
+        "scheduledDate": { "type": "string", "maxLength": 32 },
+        "priority": { "type": "string", "enum": ["Standard", "Urgent"] },
+        "status": { "type": "string", "enum": ["Assigned", "In Progress", "Queued Offline", "Completed"] },
+        "expectedCategory": { "type": "string", "enum": ["Cattle", "Goats", "Sheep", "Pigs", "Poultry", "Other livestock"] },
+        "expectedBreed": { "type": "string", "maxLength": 100 },
+        "expectedQuantity": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "reference",
+        "listingId",
+        "listingTitle",
+        "sellerId",
+        "sellerName",
+        "farmName",
+        "country",
+        "province",
+        "district",
+        "assignedAgentId",
+        "assignedAgentName",
+        "scheduledDate",
+        "priority",
+        "status",
+        "expectedCategory",
+        "expectedBreed",
+        "expectedQuantity",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CollectionCentreRecord": {
+      "title": "CollectionCentreRecord",
+      "description": "Collection hub pen intake, weighbridge, and PIN release record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "reference": { "type": "string", "minLength": 3, "maxLength": 40, "pattern": "^[A-Z0-9\\-]+$" },
+        "centreName": { "type": "string", "maxLength": 180 },
+        "operatorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "buyerId": { "type": "string", "maxLength": 128 },
+        "sellerId": { "type": "string", "maxLength": 128 },
+        "country": { "type": "string", "maxLength": 80 },
+        "transactionRef": { "type": "string", "maxLength": 40 },
+        "listingTitle": { "type": "string", "maxLength": 160 },
+        "category": { "type": "string", "enum": ["Cattle", "Goats", "Sheep", "Pigs", "Poultry", "Other livestock"] },
+        "quantity": { "type": "number" },
+        "sellerName": { "type": "string", "maxLength": 120 },
+        "buyerName": { "type": "string", "maxLength": 120 },
+        "penNumber": { "type": "string", "maxLength": 60 },
+        "checkedWeightAvgKg": { "type": "number" },
+        "status": { "type": "string", "enum": ["Expected", "Checked In", "Inspected", "Ready for Handover", "Released"] },
+        "expectedAt": { "type": "string", "maxLength": 64 },
+        "checkedInAt": { "type": "string", "maxLength": 64 },
+        "releasedAt": { "type": "string", "maxLength": 64 },
+        "handoverPin": { "type": "string", "maxLength": 32 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "reference",
+        "centreName",
+        "operatorId",
+        "transactionRef",
+        "listingTitle",
+        "category",
+        "quantity",
+        "sellerName",
+        "buyerName",
+        "penNumber",
+        "checkedWeightAvgKg",
+        "status",
+        "expectedAt",
+        "handoverPin",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "TransportJob": {
+      "title": "TransportJob",
+      "description": "Livestock haulage assignment and proof-of-delivery record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "reference": { "type": "string", "minLength": 3, "maxLength": 40, "pattern": "^[A-Z0-9\\-]+$" },
+        "transactionId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "transactionRef": { "type": "string", "maxLength": 40 },
+        "listingTitle": { "type": "string", "maxLength": 160 },
+        "category": { "type": "string", "enum": ["Cattle", "Goats", "Sheep", "Pigs", "Poultry", "Other livestock"] },
+        "quantity": { "type": "number" },
+        "buyerId": { "type": "string", "maxLength": 128 },
+        "sellerId": { "type": "string", "maxLength": 128 },
+        "pickupLocation": { "type": "string", "maxLength": 200 },
+        "destination": { "type": "string", "maxLength": 200 },
+        "country": { "type": "string", "maxLength": 80 },
+        "distanceKm": { "type": "number" },
+        "requirements": { "type": "string", "maxLength": 500 },
+        "scheduledDate": { "type": "string", "maxLength": 32 },
+        "feeUsd": { "type": "number" },
+        "status": { "type": "string", "enum": ["Available", "Accepted", "En Route to Pickup", "Loaded & In Transit", "Delivered"] },
+        "assignedPartnerId": { "type": "string", "maxLength": 128 },
+        "assignedDriver": { "type": "string", "maxLength": 120 },
+        "assignedVehicle": { "type": "string", "maxLength": 80 },
+        "podRecipient": { "type": "string", "maxLength": 120 },
+        "podCode": { "type": "string", "maxLength": 40 },
+        "podDeliveredAt": { "type": "string", "maxLength": 64 },
+        "podConditionNotes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "reference",
+        "transactionId",
+        "transactionRef",
+        "listingTitle",
+        "category",
+        "quantity",
+        "pickupLocation",
+        "destination",
+        "distanceKm",
+        "requirements",
+        "scheduledDate",
+        "feeUsd",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "TransportVehicle": {
+      "title": "TransportVehicle",
+      "description": "Registered livestock carrier vehicle owned by a transport partner.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "partnerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "registration": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "model": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "capacityHead": { "type": "number" },
+        "suitableFor": { "type": "string", "maxLength": 160 },
+        "driverName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "driverPhone": { "type": "string", "maxLength": 40 },
+        "status": { "type": "string", "enum": ["Available", "On Route", "Maintenance"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "partnerId",
+        "registration",
+        "model",
+        "capacityHead",
+        "suitableFor",
+        "driverName",
+        "driverPhone",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Direct trade message thread between two marketplace participants.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "subject": { "type": "string", "minLength": 2, "maxLength": 180 },
+        "contextType": { "type": "string", "enum": ["Listing", "Offer", "Transaction", "Verification"] },
+        "contextRef": { "type": "string", "maxLength": 60 },
+        "participantIds": { "type": "array" },
+        "participants": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "subject",
+        "contextType",
+        "contextRef",
+        "participantIds",
+        "participants",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MessageItem": {
+      "title": "MessageItem",
+      "description": "Individual message inside a conversation subcollection.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "senderId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "senderName": { "type": "string", "maxLength": 120 },
+        "senderRole": { "type": "string", "enum": ["buyer", "seller", "agent", "centre", "transport", "admin"] },
+        "participantIds": { "type": "array" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "attachmentName": { "type": "string", "maxLength": 180 },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "senderId", "senderName", "senderRole", "participantIds", "text", "read", "createdAt"]
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "description": "Role-scoped or user-scoped marketplace alert.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "recipientUserId": { "type": "string", "maxLength": 128 },
+        "recipientRole": { "type": "string", "enum": ["buyer", "seller", "agent", "centre", "transport", "admin", "all"] },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "body": { "type": "string", "minLength": 2, "maxLength": 600 },
+        "category": { "type": "string", "enum": ["offer", "verification", "transaction", "logistics", "dispute", "review"] },
+        "read": { "type": "boolean" },
+        "linkView": { "type": "string", "maxLength": 80 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "recipientRole", "title", "body", "category", "read", "createdAt"]
+    },
+    "SellerReview": {
+      "title": "SellerReview",
+      "description": "Verified buyer review anchored to a completed transaction.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "sellerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "sellerName": { "type": "string", "maxLength": 120 },
+        "buyerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "buyerName": { "type": "string", "maxLength": 120 },
+        "transactionId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "transactionRef": { "type": "string", "maxLength": 40 },
+        "rating": { "type": "number" },
+        "comment": { "type": "string", "minLength": 2, "maxLength": 1200 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "sellerId",
+        "sellerName",
+        "buyerId",
+        "buyerName",
+        "transactionId",
+        "transactionRef",
+        "rating",
+        "comment",
+        "createdAt"
+      ]
+    },
+    "DisputeCase": {
+      "title": "DisputeCase",
+      "description": "Escalated transaction dispute investigated by MARIKETI operations admins.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "reference": { "type": "string", "minLength": 3, "maxLength": 40, "pattern": "^[A-Z0-9\\-]+$" },
+        "transactionId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "transactionRef": { "type": "string", "maxLength": 40 },
+        "openedById": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "openedBy": { "type": "string", "maxLength": 140 },
+        "buyerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "sellerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "against": { "type": "string", "maxLength": 140 },
+        "reason": { "type": "string", "minLength": 3, "maxLength": 160 },
+        "description": { "type": "string", "minLength": 5, "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["Open", "Under Investigation", "Resolved"] },
+        "resolution": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "reference",
+        "transactionId",
+        "transactionRef",
+        "openedById",
+        "openedBy",
+        "buyerId",
+        "sellerId",
+        "against",
+        "reason",
+        "description",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AuditLogEntry": {
+      "title": "AuditLogEntry",
+      "description": "Append-only operational audit trail readable only by admins.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "actorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "actor": { "type": "string", "maxLength": 120 },
+        "role": { "type": "string", "enum": ["buyer", "seller", "agent", "centre", "transport", "admin"] },
+        "action": { "type": "string", "minLength": 2, "maxLength": 200 },
+        "target": { "type": "string", "maxLength": 160 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "actorId", "actor", "role", "action", "target", "createdAt"]
+    },
+    "AuctionCenter": {
+      "title": "AuctionCenter",
+      "description": "Physical livestock auction sale yard and kraal center across Southern Africa and Pan-Africa.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "code": { "type": "string", "minLength": 3, "maxLength": 40, "pattern": "^[A-Z0-9\\-]+$" },
+        "name": { "type": "string", "minLength": 3, "maxLength": 160 },
+        "country": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "province": { "type": "string", "maxLength": 80 },
+        "district": { "type": "string", "maxLength": 80 },
+        "address": { "type": "string", "maxLength": 220 },
+        "penCapacityHead": { "type": "number" },
+        "weighbridgeCertified": { "type": "boolean" },
+        "vetAuthority": { "type": "string", "maxLength": 140 },
+        "ringManager": { "type": "string", "maxLength": 120 },
+        "nextSaleDate": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "enum": ["Active", "Upcoming Sale", "Maintenance"] },
+        "facilities": { "type": "array" },
+        "image": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "code", "name", "country", "province", "district", "address",
+        "penCapacityHead", "weighbridgeCertified", "vetAuthority", "ringManager",
+        "nextSaleDate", "status", "facilities", "image", "createdAt", "updatedAt"
+      ]
+    },
+    "AuctionEvent": {
+      "title": "AuctionEvent",
+      "description": "Scheduled or live hybrid physical + online livestock auction event.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "reference": { "type": "string", "minLength": 3, "maxLength": 40, "pattern": "^[A-Z0-9\\-]+$" },
+        "title": { "type": "string", "minLength": 4, "maxLength": 180 },
+        "centerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "centerName": { "type": "string", "maxLength": 160 },
+        "country": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "province": { "type": "string", "maxLength": 80 },
+        "district": { "type": "string", "maxLength": 80 },
+        "auctioneerName": { "type": "string", "maxLength": 140 },
+        "mode": { "type": "string", "enum": ["Hybrid (Physical + Online)", "Online Timed"] },
+        "status": { "type": "string", "enum": ["Live Now", "Upcoming", "Completed"] },
+        "startsAt": { "type": "string", "maxLength": 64 },
+        "endsAt": { "type": "string", "maxLength": 64 },
+        "totalLots": { "type": "number" },
+        "registeredBidders": { "type": "number" },
+        "catalogNotes": { "type": "string", "maxLength": 1200 },
+        "coverImage": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "reference", "title", "centerId", "centerName", "country",
+        "province", "district", "auctioneerName", "mode", "status",
+        "startsAt", "endsAt", "totalLots", "registeredBidders", "catalogNotes",
+        "coverImage", "createdAt", "updatedAt"
+      ]
+    },
+    "AuctionLot": {
+      "title": "AuctionLot",
+      "description": "Individual livestock lot competing simultaneously on the physical auction floor and online ring.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "auctionId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "lotNumber": { "type": "string", "minLength": 2, "maxLength": 32 },
+        "title": { "type": "string", "minLength": 4, "maxLength": 180 },
+        "category": { "type": "string", "enum": ["Cattle", "Goats", "Sheep", "Pigs", "Poultry", "Other livestock"] },
+        "breed": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "quantity": { "type": "number" },
+        "avgWeightKg": { "type": "number" },
+        "ageLabel": { "type": "string", "maxLength": 60 },
+        "gender": { "type": "string", "enum": ["Bull / Male", "Cow / Female", "Heifer", "Steer / Ox", "Mixed Herd"] },
+        "reservePriceUsd": { "type": "number" },
+        "openingBidUsd": { "type": "number" },
+        "currentBidUsd": { "type": "number" },
+        "bidIncrementUsd": { "type": "number" },
+        "bidCount": { "type": "number" },
+        "highestBidderId": { "type": "string", "maxLength": 128 },
+        "highestBidderName": { "type": "string", "maxLength": 120 },
+        "highestBidderPaddle": { "type": "string", "maxLength": 32 },
+        "highestBidChannel": { "type": "string", "enum": ["Online", "Floor"] },
+        "status": { "type": "string", "enum": ["Live", "Queued", "Sold", "Passed In"] },
+        "vetCertRef": { "type": "string", "maxLength": 60 },
+        "farmOrigin": { "type": "string", "maxLength": 160 },
+        "country": { "type": "string", "maxLength": 80 },
+        "images": { "type": "array" },
+        "notes": { "type": "string", "maxLength": 1200 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "auctionId", "lotNumber", "title", "category", "breed",
+        "quantity", "avgWeightKg", "ageLabel", "gender", "reservePriceUsd",
+        "openingBidUsd", "currentBidUsd", "bidIncrementUsd", "bidCount",
+        "status", "vetCertRef", "farmOrigin", "country", "images", "notes",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "AuctionBid": {
+      "title": "AuctionBid",
+      "description": "Immutable floor or online bid recorded in an auction lot's subcollection.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "lotId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "auctionId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "bidderId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "bidderName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "paddleNumber": { "type": "string", "minLength": 2, "maxLength": 32 },
+        "channel": { "type": "string", "enum": ["Online", "Floor"] },
+        "amountUsd": { "type": "number" },
+        "maxProxyUsd": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "lotId", "auctionId", "bidderId", "bidderName",
+        "paddleNumber", "channel", "amountUsd", "createdAt"
+      ]
+    },
+    "AgriProduct": {
+      "title": "AgriProduct",
+      "description": "Veterinary, traceability, nutrition, or ranch equipment product sold online via MARIKETI Store.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "sku": { "type": "string", "minLength": 3, "maxLength": 40, "pattern": "^[A-Z0-9\\-]+$" },
+        "name": { "type": "string", "minLength": 3, "maxLength": 160 },
+        "category": { "type": "string", "enum": ["Veterinary & Vaccines", "Traceability & Ear Tags", "Nutrition & Minerals", "Ranch Equipment"] },
+        "brand": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "priceUsd": { "type": "number" },
+        "unitLabel": { "type": "string", "maxLength": 60 },
+        "stockQty": { "type": "number" },
+        "vetApproved": { "type": "boolean" },
+        "subscriptionEligible": { "type": "boolean" },
+        "subscriptionDiscountPct": { "type": "number" },
+        "countryAvailability": { "type": "string", "maxLength": 120 },
+        "description": { "type": "string", "maxLength": 1200 },
+        "image": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "sku", "name", "category", "brand", "priceUsd", "unitLabel",
+        "stockQty", "vetApproved", "subscriptionEligible", "countryAvailability",
+        "description", "image", "createdAt", "updatedAt"
+      ]
+    },
+    "ProductOrder": {
+      "title": "ProductOrder",
+      "description": "Agri-vet product order placed by a verified MARIKETI member.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "reference": { "type": "string", "minLength": 3, "maxLength": 40, "pattern": "^[A-Z0-9\\-]+$" },
+        "buyerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "buyerName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "country": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "deliveryAddress": { "type": "string", "minLength": 4, "maxLength": 260 },
+        "items": { "type": "array" },
+        "totalUsd": { "type": "number" },
+        "paymentMode": { "type": "string", "maxLength": 120 },
+        "status": { "type": "string", "enum": ["Pending", "Confirmed", "Dispatched", "Delivered", "Cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "reference", "buyerId", "buyerName", "country", "deliveryAddress",
+        "items", "totalUsd", "paymentMode", "status", "createdAt", "updatedAt"
+      ]
+    },
+    "UserSubscription": {
+      "title": "UserSubscription",
+      "description": "Recurring MARIKETI membership or supplies subscription keyed by userId.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "planId": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "planName": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "tier": { "type": "string", "enum": ["buyer_pro", "rancher_pro", "vet_supplies_box", "enterprise_auction"] },
+        "billingCycle": { "type": "string", "enum": ["monthly", "annual"] },
+        "amountUsd": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "paused", "cancelled"] },
+        "startedAt": { "type": "string", "maxLength": 64 },
+        "renewsAt": { "type": "string", "maxLength": 64 },
+        "paymentMode": { "type": "string", "maxLength": 120 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id", "userId", "userName", "planId", "planName", "tier",
+        "billingCycle", "amountUsd", "status", "startedAt", "renewsAt",
+        "paymentMode", "createdAt", "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Trusted administrator grant records."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserAccount" },
+      "description": "Private user accounts with PII strictly isolated to owner and admins."
+    },
+    "/publicProfiles/{userId}": {
+      "schema": { "$ref": "#/entities/PublicProfile" },
+      "description": "Public non-PII profile cards for marketplace participants."
+    },
+    "/listings/{listingId}": {
+      "schema": { "$ref": "#/entities/LivestockListing" },
+      "description": "Pan-African livestock listings."
+    },
+    "/offers/{offerId}": {
+      "schema": { "$ref": "#/entities/Offer" },
+      "description": "Buyer-seller price offers and counter-offer histories."
+    },
+    "/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "Milestone-tracked livestock trade records."
+    },
+    "/fieldTasks/{taskId}": {
+      "schema": { "$ref": "#/entities/FieldInspectionTask" },
+      "description": "On-farm livestock inspection tasks assigned to field agents."
+    },
+    "/centreRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/CollectionCentreRecord" },
+      "description": "Collection hub pen intake and handover release records."
+    },
+    "/transportJobs/{jobId}": {
+      "schema": { "$ref": "#/entities/TransportJob" },
+      "description": "Livestock haulage jobs and proof-of-delivery records."
+    },
+    "/vehicles/{vehicleId}": {
+      "schema": { "$ref": "#/entities/TransportVehicle" },
+      "description": "Registered livestock carrier fleet vehicles."
+    },
+    "/conversations/{conversationId}": {
+      "schema": { "$ref": "#/entities/Conversation" },
+      "description": "Trade conversation threads."
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/MessageItem" },
+      "description": "Individual messages under a parent conversation (Master Gate)."
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/AppNotification" },
+      "description": "Marketplace activity notifications."
+    },
+    "/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/SellerReview" },
+      "description": "Verified buyer reviews of sellers."
+    },
+    "/disputes/{disputeId}": {
+      "schema": { "$ref": "#/entities/DisputeCase" },
+      "description": "Escalated transaction disputes."
+    },
+    "/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLogEntry" },
+      "description": "Immutable operational audit log entries."
+    },
+    "/auctionCenters/{centerId}": {
+      "schema": { "$ref": "#/entities/AuctionCenter" },
+      "description": "Physical livestock auction sale yards and kraal facilities."
+    },
+    "/auctions/{auctionId}": {
+      "schema": { "$ref": "#/entities/AuctionEvent" },
+      "description": "Scheduled and live hybrid physical + online livestock auction events."
+    },
+    "/auctionLots/{lotId}": {
+      "schema": { "$ref": "#/entities/AuctionLot" },
+      "description": "Livestock lots active in hybrid physical + online auctions."
+    },
+    "/auctionLots/{lotId}/bids/{bidId}": {
+      "schema": { "$ref": "#/entities/AuctionBid" },
+      "description": "Immutable floor and online bids under a parent auction lot (Master Gate)."
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/AgriProduct" },
+      "description": "Agri-vet supplies, vaccines, ear tags, nutrition, and ranch equipment catalog."
+    },
+    "/productOrders/{orderId}": {
+      "schema": { "$ref": "#/entities/ProductOrder" },
+      "description": "Member orders placed in the MARIKETI Agri-Vet online store."
+    },
+    "/subscriptions/{subscriptionId}": {
+      "schema": { "$ref": "#/entities/UserSubscription" },
+      "description": "Recurring MARIKETI membership and supplies subscriptions."
+    }
+  }
+}
