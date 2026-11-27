@@ -21,6 +21,7 @@ import {
 } from '../../lib/utils';
 import type { AgriProductCategory, ProductOrder } from '../../types/mariketi';
 import { CountrySelect } from '../../components/shared/CountrySelect';
+import { ProductDetailView } from '../../components/store/ProductDetailView';
 import {
   Button,
   Card,
@@ -33,12 +34,12 @@ import {
 
 type StoreTab = 'store' | 'plans' | 'orders';
 
-const PRODUCT_CATEGORIES: ('All' | AgriProductCategory)[] = [
-  'All',
-  'Veterinary & Vaccines',
-  'Traceability & Ear Tags',
-  'Nutrition & Minerals',
-  'Ranch Equipment',
+const PRODUCT_CATEGORIES: { value: 'All' | AgriProductCategory; short: string }[] = [
+  { value: 'All', short: 'All' },
+  { value: 'Veterinary & Vaccines', short: 'Vaccines' },
+  { value: 'Traceability & Ear Tags', short: 'Ear Tags' },
+  { value: 'Nutrition & Minerals', short: 'Minerals' },
+  { value: 'Ranch Equipment', short: 'Equipment' },
 ];
 
 const ORDER_STATUS_TONE: Record<
@@ -71,6 +72,7 @@ export const StorePlansPage: React.FC = () => {
   } = useMariketi();
 
   const [activeTab, setActiveTab] = useState<StoreTab>('store');
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<'All' | AgriProductCategory>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
@@ -83,6 +85,22 @@ export const StorePlansPage: React.FC = () => {
   );
 
   const hasActiveSub = currentUserSubscription?.status === 'active';
+
+  const selectedProduct = useMemo(
+    () => (selectedProductId ? products.find((p) => p.id === selectedProductId) || null : null),
+    [products, selectedProductId]
+  );
+
+  const relatedProducts = useMemo(() => {
+    if (!selectedProduct) return [];
+    const sameCat = products.filter(
+      (p) => p.id !== selectedProduct.id && p.category === selectedProduct.category
+    );
+    const others = products.filter(
+      (p) => p.id !== selectedProduct.id && p.category !== selectedProduct.category
+    );
+    return [...sameCat, ...others].slice(0, 3);
+  }, [products, selectedProduct]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -140,13 +158,19 @@ export const StorePlansPage: React.FC = () => {
     const order = checkoutCart(deliveryAddress.trim(), deliveryCountry);
     if (order) {
       setCartOpen(false);
+      setSelectedProductId(null);
       setActiveTab('orders');
     }
   };
 
+  const handleBuyNow = (productId: string, qty: number) => {
+    addToCart(productId, qty);
+    setCartOpen(true);
+  };
+
   return (
     <div>
-      {/* Editorial Banner */}
+      {/* Compact Editorial Banner */}
       <section className="relative bg-[#071320] text-white overflow-hidden border-b border-white/10">
         <div className="absolute inset-0">
           <SafeImage
@@ -154,35 +178,35 @@ export const StorePlansPage: React.FC = () => {
             alt="MARIKETI veterinary vaccines, RFID ear tags, mineral blocks and ranch supplies"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#071320]/96 via-[#0A1C30]/88 to-[#091827]/58" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#071320]/96 via-[#0A1C30]/88 to-[#091827]/60" />
         </div>
 
-        <div className="relative max-w-[1280px] mx-auto px-4 sm:px-6 py-9 sm:py-12">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-            <div className="max-w-2xl">
+        <div className="relative max-w-[1280px] mx-auto px-4 sm:px-6 py-6 sm:py-9">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+            <div className="max-w-xl">
               <p className="text-xs font-semibold text-[#F69B3D]">
-                Agri-Vet Commerce & Recurring Memberships
+                Agri-Vet Store &amp; Plans
               </p>
-              <h1 className="mt-2 text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-white">
-                Veterinary supplies, RFID traceability & rancher subscriptions.
+              <h1 className="mt-1.5 text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight text-white">
+                Vaccines, RFID tags &amp; rancher plans.
               </h1>
-              <p className="mt-3 text-sm sm:text-[15px] text-slate-200 leading-relaxed prose-justify">
-                Order cold-chain vaccines, official ear-tag kits, mineral licks, and ranch weighing hardware delivered to your farm or nearest MARIKETI Collection Centre — with automatic member savings on recurring plans.
+              <p className="mt-2 text-sm text-slate-200 leading-snug">
+                Cold-chain vaccines, ear tags, mineral licks &amp; weighing gear dispatched to your farm or MARIKETI hub.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <div className="flex items-center gap-3 shrink-0">
               {hasActiveSub && currentUserSubscription && (
-                <div className="bg-white/10 border border-white/20 rounded-lg px-3.5 py-2 text-xs">
-                  <p className="text-slate-300">Active Plan</p>
-                  <p className="font-semibold text-[#F69B3D] mt-0.5">
+                <div className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-xs">
+                  <p className="text-slate-300 leading-none">Active Plan</p>
+                  <p className="font-semibold text-[#F69B3D] mt-1 whitespace-nowrap">
                     {currentUserSubscription.planName}
                   </p>
                 </div>
               )}
               <Button
                 variant="accent"
-                size="lg"
+                size="md"
                 onClick={() => setCartOpen(true)}
               >
                 <ShoppingCart className="w-4 h-4" />
@@ -193,19 +217,19 @@ export const StorePlansPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Segmented Tab Bar */}
+      {/* Zero-Scroll 3-Column Segmented Tab Bar */}
       <div className="bg-white border-b border-[#DCE4EC]">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div
             role="tablist"
             aria-label="Store and subscription sections"
-            className="inline-flex rounded-lg bg-[#EEF3F8] p-1 border border-[#DCE4EC] w-full sm:w-auto overflow-x-auto"
+            className="grid grid-cols-3 sm:inline-flex rounded-lg bg-[#EEF3F8] p-1 border border-[#DCE4EC] w-full sm:w-auto"
           >
             {(
               [
-                { id: 'store', label: 'Agri-Vet Online Store' },
-                { id: 'plans', label: 'MARIKETI Subscriptions' },
-                { id: 'orders', label: `My Orders (${myOrders.length})` },
+                { id: 'store', label: 'Store' },
+                { id: 'plans', label: 'Plans' },
+                { id: 'orders', label: `Orders (${myOrders.length})` },
               ] as const
             ).map((tab) => {
               const active = activeTab === tab.id;
@@ -215,9 +239,12 @@ export const StorePlansPage: React.FC = () => {
                   type="button"
                   role="tab"
                   aria-selected={active}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (tab.id !== 'store') setSelectedProductId(null);
+                  }}
                   className={cn(
-                    'flex-1 sm:flex-initial inline-flex items-center justify-center px-3.5 py-2 rounded-md text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28]',
+                    'inline-flex items-center justify-center px-2.5 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28]',
                     active
                       ? 'bg-[#10243A] text-white'
                       : 'text-[#526071] hover:text-[#10243A]'
@@ -229,155 +256,205 @@ export const StorePlansPage: React.FC = () => {
             })}
           </div>
 
-          <p className="text-xs text-[#526071]">
-            Demo commerce mode · Simulated checkout & billing states clearly labeled.
+          <p className="text-xs text-[#526071] whitespace-nowrap truncate">
+            Demo mode · Simulated checkout &amp; billing
           </p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-7 sm:py-9">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-5 sm:py-8">
         {/* ============================================================
-            TAB 1: AGRI-VET PRODUCTS STORE
+            TAB 1: AGRI-VET PRODUCTS STORE (CATALOG OR FULL DETAIL VIEW)
             ============================================================ */}
         {activeTab === 'store' && (
-          <div className="space-y-6">
-            {/* Category & Search Controls */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <div className="inline-flex flex-wrap rounded-lg bg-white p-1 border border-[#DCE4EC]">
-                {PRODUCT_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setCategoryFilter(cat)}
-                    className={cn(
-                      'px-3 py-1.5 rounded-md text-xs font-semibold transition-colors whitespace-nowrap',
-                      categoryFilter === cat
-                        ? 'bg-[#10243A] text-white'
-                        : 'text-[#526071] hover:text-[#10243A]'
-                    )}
-                  >
-                    {cat}
-                  </button>
-                ))}
+          selectedProduct ? (
+            <ProductDetailView
+              product={selectedProduct}
+              relatedProducts={relatedProducts}
+              hasActiveSub={hasActiveSub}
+              inCartQty={cart.find((c) => c.productId === selectedProduct.id)?.qty || 0}
+              onBack={() => setSelectedProductId(null)}
+              onAddToCart={addToCart}
+              onBuyNow={handleBuyNow}
+              onSelectProduct={(id) => setSelectedProductId(id)}
+              onViewPlans={() => {
+                setSelectedProductId(null);
+                setActiveTab('plans');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          ) : (
+            <div className="space-y-5">
+              {/* Compact Category Strip & Search */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {PRODUCT_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      onClick={() => setCategoryFilter(cat.value)}
+                      className={cn(
+                        'h-8 px-3 rounded-lg text-xs font-semibold border transition-colors whitespace-nowrap',
+                        categoryFilter === cat.value
+                          ? 'bg-[#10243A] text-white border-[#10243A]'
+                          : 'bg-white text-[#526071] border-[#CFD9E3] hover:text-[#10243A]'
+                      )}
+                    >
+                      {cat.short}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative w-full lg:w-72">
+                  <Search className="w-4 h-4 text-[#526071] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search vaccines, ear tags, SKU..."
+                    className="w-full h-9 pl-9 pr-3 rounded-lg bg-white border border-[#CFD9E3] text-sm text-[#0F1B2A] placeholder:text-[#667587] focus:outline-none focus:border-[#10243A]"
+                  />
+                </div>
               </div>
 
-              <div className="relative w-full lg:w-80">
-                <Search className="w-4 h-4 text-[#526071] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search vaccines, ear tags, licks, SKU..."
-                  className="w-full h-10 pl-9 pr-3 rounded-lg bg-white border border-[#CFD9E3] text-sm text-[#0F1B2A] placeholder:text-[#667587] focus:outline-none focus:border-[#10243A]"
+              {filteredProducts.length === 0 ? (
+                <EmptyState
+                  title="No supplies match your filter"
+                  description="Select All categories or clear your search keyword."
+                  action={
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setCategoryFilter('All');
+                        setSearchQuery('');
+                      }}
+                    >
+                      Reset Store Filters
+                    </Button>
+                  }
                 />
-              </div>
-            </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {filteredProducts.map((product) => {
+                    const inCartQty =
+                      cart.find((c) => c.productId === product.id)?.qty || 0;
+                    const discountPct =
+                      product.subscriptionEligible && product.subscriptionDiscountPct
+                        ? product.subscriptionDiscountPct
+                        : 0;
+                    const memberPrice = discountPct
+                      ? Math.round(product.priceUsd * (1 - discountPct / 100))
+                      : product.priceUsd;
 
-            {filteredProducts.length === 0 ? (
-              <EmptyState
-                title="No supplies match your filter"
-                description="Try selecting All categories or clearing the search keyword."
-                action={
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setCategoryFilter('All');
-                      setSearchQuery('');
-                    }}
-                  >
-                    Reset Store Filters
-                  </Button>
-                }
-              />
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                {filteredProducts.map((product) => {
-                  const inCartQty =
-                    cart.find((c) => c.productId === product.id)?.qty || 0;
-                  const discountPct =
-                    product.subscriptionEligible && product.subscriptionDiscountPct
-                      ? product.subscriptionDiscountPct
-                      : 0;
-                  const memberPrice = discountPct
-                    ? Math.round(product.priceUsd * (1 - discountPct / 100))
-                    : product.priceUsd;
+                    return (
+                      <Card key={product.id} className="overflow-hidden flex flex-col">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedProductId(product.id);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className="aspect-[4/3] bg-[#071320] overflow-hidden text-left block w-full group"
+                        >
+                          <SafeImage
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                          />
+                        </button>
 
-                  return (
-                    <Card key={product.id} className="overflow-hidden flex flex-col">
-                      <div className="aspect-[4/3] bg-[#071320] overflow-hidden">
-                        <SafeImage
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                        <div className="p-4 flex-1 flex flex-col justify-between gap-3">
+                          <div>
+                            <div className="flex items-center justify-between gap-2 text-[11px]">
+                              <span className="font-semibold text-[#1A4D73] truncate">
+                                {product.category}
+                              </span>
+                              <span className="font-mono text-[#526071] shrink-0 tabular-nums">
+                                {product.sku}
+                              </span>
+                            </div>
 
-                      <div className="p-4 flex-1 flex flex-col justify-between gap-3.5">
-                        <div>
-                          <div className="flex items-center justify-between gap-2 text-[11px]">
-                            <span className="font-semibold text-[#1A4D73] truncate">
-                              {product.category}
-                            </span>
-                            <span className="font-mono text-[#526071] shrink-0 tabular-nums">
-                              {product.sku}
-                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedProductId(product.id);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="mt-1.5 text-left block w-full group"
+                            >
+                              <h3 className="text-sm font-bold text-[#10243A] group-hover:text-[#1A4D73] leading-snug line-clamp-2 transition-colors">
+                                {product.name}
+                              </h3>
+                            </button>
+
+                            <p className="text-xs text-[#526071] mt-1 truncate">
+                              {product.brand} · {product.unitLabel}
+                            </p>
+
+                            <p className="mt-1.5 text-xs text-[#526071] leading-relaxed line-clamp-2">
+                              {product.description}
+                            </p>
                           </div>
 
-                          <h3 className="mt-1.5 text-sm font-bold text-[#10243A] leading-snug">
-                            {product.name}
-                          </h3>
-                          <p className="text-xs text-[#526071] mt-0.5">
-                            {product.brand} · {product.unitLabel}
-                            {product.vetApproved && (
-                              <span className="text-[#156B45] font-semibold"> · Vet Approved</span>
-                            )}
-                          </p>
-                          <p className="mt-2 text-xs text-[#526071] leading-relaxed line-clamp-3">
-                            {product.description}
-                          </p>
-                        </div>
-
-                        <div className="pt-3 border-t border-[#DCE4EC] space-y-2.5">
-                          <div className="flex items-baseline justify-between gap-2">
-                            <div>
-                              <p className="font-mono text-lg font-extrabold text-[#10243A] tabular-nums">
+                          <div className="pt-3 border-t border-[#DCE4EC] space-y-2.5">
+                            <div className="flex items-baseline justify-between gap-2">
+                              <p className="font-mono text-lg font-extrabold text-[#10243A] tabular-nums whitespace-nowrap">
                                 {formatUSD(hasActiveSub ? memberPrice : product.priceUsd)}
                               </p>
-                              {discountPct > 0 && (
-                                <p className="text-[11px] text-[#156B45] font-medium">
-                                  {hasActiveSub
-                                    ? `Member price (${discountPct}% off ${formatUSD(product.priceUsd)})`
-                                    : `Save ${discountPct}% with MARIKETI Plan`}
-                                </p>
+                              <span className="text-[11px] font-mono text-[#526071] tabular-nums whitespace-nowrap">
+                                {product.stockQty} in stock
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-2 text-[11px]">
+                              <span className="text-[#156B45] font-semibold truncate">
+                                {discountPct > 0
+                                  ? hasActiveSub
+                                    ? `${discountPct}% off applied`
+                                    : `Save ${discountPct}% w/ Plan`
+                                  : product.vetApproved
+                                  ? 'Vet Approved'
+                                  : 'Commercial Grade'}
+                              </span>
+                              {product.vetApproved && discountPct > 0 && (
+                                <span className="text-[#156B45] font-semibold shrink-0 whitespace-nowrap">
+                                  Vet Approved
+                                </span>
                               )}
                             </div>
-                            <span className="text-[11px] font-mono text-[#526071] tabular-nums shrink-0">
-                              {product.stockQty} in stock
-                            </span>
+
+                            <div className="grid grid-cols-5 gap-2">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="col-span-2"
+                                onClick={() => {
+                                  setSelectedProductId(product.id);
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                              >
+                                Details
+                              </Button>
+                              <Button
+                                variant={inCartQty > 0 ? 'accent' : 'primary'}
+                                size="sm"
+                                className="col-span-3"
+                                onClick={() => addToCart(product.id, 1)}
+                              >
+                                <ShoppingCart className="w-3.5 h-3.5" />
+                                {inCartQty > 0 ? `In Cart (${inCartQty})` : 'Add'}
+                              </Button>
+                            </div>
                           </div>
-
-                          <p className="text-[11px] text-[#526071] truncate">
-                            Dispatch: {product.countryAvailability}
-                          </p>
-
-                          <Button
-                            variant={inCartQty > 0 ? 'accent' : 'primary'}
-                            size="sm"
-                            className="w-full"
-                            onClick={() => addToCart(product.id, 1)}
-                          >
-                            <ShoppingCart className="w-3.5 h-3.5" />
-                            {inCartQty > 0 ? `Add Another (${inCartQty} in cart)` : 'Add to Cart'}
-                          </Button>
                         </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )
         )}
 
         {/* ============================================================
@@ -454,43 +531,43 @@ export const StorePlansPage: React.FC = () => {
             )}
 
             {/* Header + Monthly/Annual Toggle */}
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold text-[#1A4D73]">
-                  Predictable Commercial Plans
+                  Commercial Memberships
                 </p>
-                <h2 className="mt-1 text-2xl font-bold text-[#10243A]">
-                  Subscriptions for buyers, ranchers, veterinary supply boxes & auctioneers
+                <h2 className="mt-0.5 text-xl sm:text-2xl font-bold text-[#10243A]">
+                  Plans for buyers, ranchers &amp; auctioneers
                 </h2>
-                <p className="mt-1 text-sm text-[#526071] max-w-2xl">
-                  Unlock priority hybrid auction paddles, verified herd analytics, monthly veterinary replenishment credits, and automatic Agri-Vet Store discounts.
+                <p className="mt-1 text-xs sm:text-sm text-[#526071] max-w-xl">
+                  Priority auction paddles, monthly vet credits, and automatic Agri-Vet store discounts.
                 </p>
               </div>
 
-              <div className="inline-flex rounded-lg bg-white p-1 border border-[#DCE4EC] shrink-0">
+              <div className="grid grid-cols-2 sm:inline-flex rounded-lg bg-white p-1 border border-[#DCE4EC] shrink-0 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setBillingCycle('monthly')}
                   className={cn(
-                    'px-3.5 py-1.5 rounded-md text-xs font-semibold transition-colors',
+                    'px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-colors',
                     billingCycle === 'monthly'
                       ? 'bg-[#10243A] text-white'
                       : 'text-[#526071] hover:text-[#10243A]'
                   )}
                 >
-                  Monthly Billing
+                  Monthly
                 </button>
                 <button
                   type="button"
                   onClick={() => setBillingCycle('annual')}
                   className={cn(
-                    'px-3.5 py-1.5 rounded-md text-xs font-semibold transition-colors',
+                    'px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-colors',
                     billingCycle === 'annual'
                       ? 'bg-[#10243A] text-white'
                       : 'text-[#526071] hover:text-[#10243A]'
                   )}
                 >
-                  Annual (Save ~17%)
+                  Annual (Save 17%)
                 </button>
               </div>
             </div>

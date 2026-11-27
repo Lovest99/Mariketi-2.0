@@ -454,8 +454,8 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
         </div>
       )}
 
-      {/* Interactive Pan-African Region Filter Bar (Ordered Southern -> East -> West -> Central -> North) */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 mb-2.5">
+      {/* Interactive Pan-African Region Filter Bar (Zero horizontal scroll on mobile) */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
         <button
           type="button"
           onClick={() => {
@@ -466,10 +466,10 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
             setPage(1);
           }}
           className={cn(
-            'h-8 px-3 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 border transition-all duration-150 focus-visible:outline-2 focus-visible:outline-[#F28C28]',
+            'h-8 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap border transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28]',
             !region
-              ? 'bg-[#10243A] text-white border-[#10243A] shadow-[0_1px_3px_rgba(16,36,58,0.2)]'
-              : 'bg-white text-[#10243A] border-[#D4DDE6] hover:bg-[#F7F9FC] hover:border-[#B6C3D1]'
+              ? 'bg-[#10243A] text-white border-[#10243A]'
+              : 'bg-white text-[#10243A] border-[#CFD9E3] hover:bg-[#F7F9FC]'
           )}
         >
           All Africa (54)
@@ -488,10 +488,10 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
               setPage(1);
             }}
             className={cn(
-              'h-8 px-3 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 border transition-all duration-150 focus-visible:outline-2 focus-visible:outline-[#F28C28] inline-flex items-center gap-1.5',
+              'h-8 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap border transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28] inline-flex items-center gap-1.5',
               region === item.region
-                ? 'bg-[#10243A] text-white border-[#10243A] shadow-[0_1px_3px_rgba(16,36,58,0.2)]'
-                : 'bg-white text-[#10243A] border-[#D4DDE6] hover:bg-[#F7F9FC] hover:border-[#B6C3D1]'
+                ? 'bg-[#10243A] text-white border-[#10243A]'
+                : 'bg-white text-[#10243A] border-[#CFD9E3] hover:bg-[#F7F9FC]'
             )}
           >
             <span aria-hidden="true">{item.highlightFlags[0]}</span>
@@ -500,8 +500,8 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
         ))}
       </div>
 
-      {/* Interactive Category Segmented Bar */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 mb-4">
+      {/* Interactive Category Bar (Zero horizontal scroll on mobile) */}
+      <div className="flex flex-wrap items-center gap-1.5 mb-4">
         <button
           type="button"
           onClick={() => {
@@ -509,13 +509,13 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
             setPage(1);
           }}
           className={cn(
-            'h-9 px-3.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 border transition-all duration-150 focus-visible:outline-2 focus-visible:outline-[#F28C28]',
+            'h-8 px-3 rounded-lg text-xs font-semibold whitespace-nowrap border transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28]',
             !category
-              ? 'bg-[#10243A] text-white border-[#10243A] shadow-[0_1px_3px_rgba(16,36,58,0.2)]'
-              : 'bg-white text-[#10243A] border-[#D4DDE6] hover:bg-[#F7F9FC] hover:border-[#B6C3D1]'
+              ? 'bg-[#10243A] text-white border-[#10243A]'
+              : 'bg-white text-[#10243A] border-[#CFD9E3] hover:bg-[#F7F9FC]'
           )}
         >
-          All Livestock
+          All Stock
         </button>
         {CATEGORIES.map((cat) => (
           <button
@@ -526,13 +526,13 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
               setPage(1);
             }}
             className={cn(
-              'h-9 px-3.5 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 border transition-all duration-150 focus-visible:outline-2 focus-visible:outline-[#F28C28]',
+              'h-8 px-3 rounded-lg text-xs font-semibold whitespace-nowrap border transition-colors focus-visible:outline-2 focus-visible:outline-[#F28C28]',
               category === cat
-                ? 'bg-[#10243A] text-white border-[#10243A] shadow-[0_1px_3px_rgba(16,36,58,0.2)]'
-                : 'bg-white text-[#10243A] border-[#D4DDE6] hover:bg-[#F7F9FC] hover:border-[#B6C3D1]'
+                ? 'bg-[#10243A] text-white border-[#10243A]'
+                : 'bg-white text-[#10243A] border-[#CFD9E3] hover:bg-[#F7F9FC]'
             )}
           >
-            {cat}
+            {cat === 'Other livestock' ? 'Other' : cat}
           </button>
         ))}
       </div>
